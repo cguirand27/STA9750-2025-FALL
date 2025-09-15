@@ -1,0 +1,43 @@
+---
+title: "Caroline Guirand"
+subtitle: "Data Analyst | Sports, Media, and Entertainment Enthusiast"
+
+---
+
+  
+## About Me
+
+/* ![Image: Caroline Guirand](https://media.licdn.com/dms/image/v2/D4E03AQHaZ12WH_ZhPA/profile-displayphoto-crop_800_800/B4EZlLOS1vHoAI-/0/1757903662876?e=1760572800&v=beta&t=AyTQkOA1nK-UfqOT9sayPzExapLIJBGuiCJRY83NQ8Q)
+
+Hello! I'm Caroline Guirand, a passionate data analyst with a keen interest in sports, media, and entertainment. I specialize in transforming complex data into actionable insights that drive strategic decisions. With a strong background in statistical analysis and data visualization, I thrive on uncovering trends and patterns that help organizations stay ahead in their respective fields.
+  
+  
+## Skills & Technologies
+  
+**Technical**: R, Python, SQL, Cross Cap, HRIS: Unifocus, CRM: Raiser’s Edge, Microsoft Suite (Excel, Word, Powerpoint, Outlook), Google Suite (Sheets, Slides, Docs. 
+  
+**Creative**: Adobe Creative Suite (Photoshop, Lightroom), Canva, Capcut, Photography. 
+  
+**Languages**: Spanish (Beginner), Haitian Creole (Fluent). 
+
+## Featured Projects 
+
+1. xxx
+2. xxx
+3. xxx
+  
+  
+## Get in touch!
+
+I'm always interested in discussing new opportunities, collaborations, or data challenges. Feel free to reach out!
+
+- Email: cguirand27@gmail.com
+- [Connect on LinkedIn](https://www.linkedin.com/in/carolineguirand/)
+- [Download Resume](https://docs.google.com/document/d/1FFIOdwbryzn9HRmso7AXAAC90Sdd5OBapg5xOo-Insc/edit?tab=t.0) 
+
+```{r}
+#| include: false
+1+1
+```
+--------------
+Last Updated: `r format(Sys.time(), "%A %m %d, %Y at %H:%M%p")`
