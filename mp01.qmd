@@ -1,0 +1,102 @@
+---
+title: "Mini Project #01: Netflix Top 10 Analysis"
+author: "Caroline Guirand"
+---
+
+<!-- Hello and thank you for taking the time to review my assignment! This is the first of a series of four mini projects for my class, Stats 9750: Software Tools for Data Analytics.
+-->
+
+# Introduction:
+
+What makes a Netflix original so successful?  As a data analyst supporting the Public Relations team, I'm taking a leap into Netflix's Top 10 data to find out which recent releases have captured audiences worldwide. Together, we'll be exploring the numbers behind Netflix's latest hits and discovering what stories are worth celebrating.
+
+## Data Acquisition
+The data set used in this analysis is from Netflix's Tudum Top 10 website.
+
+```{r}
+
+## Data Download
+if(!dir.exists(file.path("data", "mp01"))){
+    dir.create(file.path("data", "mp01"), showWarnings=FALSE, recursive=TRUE)
+}
+
+GLOBAL_TOP_10_FILENAME <- file.path("data", "mp01", "global_top10_alltime.csv")
+
+if(!file.exists(GLOBAL_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv", 
+                  destfile=GLOBAL_TOP_10_FILENAME)
+}
+
+COUNTRY_TOP_10_FILENAME <- file.path("data", "mp01", "country_top10_alltime.csv")
+
+if(!file.exists(COUNTRY_TOP_10_FILENAME)){
+    download.file("https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv", 
+                  destfile=COUNTRY_TOP_10_FILENAME)
+}
+
+``` 
+
+Data was successfully downloaded and saved.
+
+
+## Data Import and Preparation
+Now that the data is downloaded, we can load it into R and prepare it for analysis. We will be using the `str()` and `glimpse()` functions to examine its structure.
+
+```{r}
+
+# load required packages
+if(!require("tidyverse")) install.packages("tidyverse")
+library(readr)
+library(dplyr)
+
+# Read the Global Top 10 data
+GLOBAL_TOP_10 <- read_tsv(GLOBAL_TOP_10_FILENAME)
+
+```
+```{r}
+
+str(GLOBAL_TOP_10)
+
+```
+
+```{r}
+
+glimpse(GLOBAL_TOP_10)
+
+```
+
+From these two functions, we can now see that in line 5, season_title is missing. Our next block of code will fix this issue. We will be converting the text string "N/A" to actual missing values:
+
+```{r}
+
+GLOBAL_TOP_10 <- GLOBAL_TOP_10 |>
+    mutate(season_title = if_else(season_title == "N/A", NA, season_title))
+
+```
+
+Now to check if it worked:
+
+```{r}
+
+glimpse(GLOBAL_TOP_10)
+
+```
+Great, so now the season_title column now shows NA values instead of "N/A" text strings.
+
+**Importing the Country-Level Data**
+
+Now, we'll be importing the country-level data as well, but this time, we'll deal with the "N/A" issue during the import process. We'll be using the 'na' argument in the `read_tsv()` function.
+
+```{r}
+
+COUNTRY_TOP_10 <- read_tsv(COUNTRY_TOP_10_FILENAME, na = c("", "NA", "N/A"))
+
+```
+
+Let's check to see if it worked:
+
+```{r}
+
+glimpse(COUNTRY_TOP_10)
+
+```
