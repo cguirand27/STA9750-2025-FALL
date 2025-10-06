@@ -100,3 +100,65 @@ Let's check to see if it worked:
 glimpse(COUNTRY_TOP_10)
 
 ```
+
+## Initial Data Exploration
+
+Before preparing our press releases, we're going to explore the data to understand what information is available. Since we're examining a new dataset, we will be looking at a random selection of rows rather than just the first few to increase our chances of spotting issues throughout the data.
+
+
+Let's create an interactive table to explore the global Top 10 data. We'll use the `DT` package to make our tables more readable:
+
+```{r}
+
+library(DT)
+GLOBAL_TOP_10 |> 
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE))
+
+```
+
+This table has issues with column names not being formatted well and large numbers that are hard to read. Our next step will fix both:
+
+```{r}
+
+library(stringr)
+format_titles <- function(df){
+    colnames(df) <- str_replace_all(colnames(df), "_", " ") |> str_to_title()
+    df
+}
+
+GLOBAL_TOP_10 |> 
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+
+```
+
+That is much better! While we're at it though, we're going to remove the season_title since we are only showing films here.
+
+```{r}
+
+GLOBAL_TOP_10 |> 
+    select(-season_title) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+
+```
+Next, we'll be converting run_time from hours to minutes for easier interpretation:
+
+```{r}
+
+GLOBAL_TOP_10 |> 
+    mutate(`runtime_(minutes)` = round(60 * runtime)) |>
+    select(-season_title, 
+           -runtime) |>
+    format_titles() |>
+    head(n=20) |>
+    datatable(options=list(searching=FALSE, info=FALSE)) |>
+    formatRound(c('Weekly Hours Viewed', 'Weekly Views'))
+
+```
+
