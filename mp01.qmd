@@ -374,3 +374,40 @@ widest_debut
 
 ```
 The TV show/season that hit the top 10 in the most countries in its debut week is "Emily in Paris" Season 2, which charted in 94 countries.
+
+Up Next: Stranger Things Press Release
+
+```{r}
+# Gather Stranger Things data
+stranger_things_data <- GLOBAL_TOP_10 |>
+  filter(show_title == "Stranger Things") |>
+  summarise(
+    total_hours = sum(weekly_hours_viewed),
+    total_weeks = sum(cumulative_weeks_in_top_10)
+  )
+
+# Country reach
+st_countries <- COUNTRY_TOP_10 |>
+  filter(show_title == "Stranger Things") |>
+  summarise(countries = n_distinct(country_name))
+
+# Compare to other English TV shows
+top_english_tv <- GLOBAL_TOP_10 |>
+  filter(category == "TV (English)") |>
+  group_by(show_title) |>
+  summarise(total_hours = sum(weekly_hours_viewed)) |>
+  arrange(desc(total_hours)) |>
+  head(5)
+
+stranger_things_data
+st_countries
+top_english_tv
+
+```
+
+### Stranger Things: The Phenomenon That Captivated the World Returns for Its Epic Finale
+
+**FOR IMMEDIATE RELEASE**
+
+As Netflix prepares to release the fifth and final season of *Stranger Things* in late 2025, the series stands as the most-watched English-language TV show in Netflix history. Across its first four seasons, *Stranger Things* has captivated audiences with a whopping 2.97 billion viewing hours, surpassing other Netflix hits like *Wednesday* (2.88 billion hours) and *Bridgerton* (2.28 billion hours). The show's unprecedented popularity has continued for 366 cumulative weeks in the Netflix Top 10, demonstrating remarkable staying power with global audiences. With a presence in 93 countries worldwide, *Stranger Things* has transcended cultural boundaries to become a truly international phenomenon.
+
