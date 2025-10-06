@@ -1,6 +1,10 @@
 ---
 title: "Mini Project #01: Netflix Top 10 Analysis"
 author: "Caroline Guirand"
+format: 
+  html:
+    code-fold: true
+    code-summary: "Show code"
 ---
 
 <!-- Hello and thank you for taking the time to review my assignment! This is the first of a series of four mini projects for my class, Stats 9750: Software Tools for Data Analytics.
@@ -436,4 +440,32 @@ india_hits
 
 ```
 
+
+### Netflix India: Streaming Success Story in the World's Most Populated Country!
+
+***FOR IMMEDIATE RELEASE***
+
+Netflix continues its explosive growth in India, the world's most populous nation, with Hindi-language content driving unprecedented engagement. Recent hits have demonstrated the platform's deep understanding of Indian audiences, with locally-produced content consistently dominating the Top 10 charts. The platform's investment in regional storytelling has paid dividends, as Indian subscribers increasingly turn to Netflix for both international blockbusters and homegrown entertainment. This success reflects Netflix's commitment to serving India's diverse audience of over 1.4 billion people, positioning the streaming giant for continued expansion in one of the world's fastest-growing entertainment markets.
+
+
+Global Film Market Press Release 
+
+```{r}
+# Non-English film success
+non_english_success <- GLOBAL_TOP_10 |>
+  filter(category == "Films (Non-English)") |>
+  group_by(show_title) |>
+  summarise(total_hours = sum(weekly_hours_viewed)) |>
+  arrange(desc(total_hours)) |>
+  head(1)
+
+non_english_success
+
+```
+
+### Netflix Dominates Global Film Market with Record-Breaking International Releases
+
+**FOR IMMEDIATE RELEASE**
+
+Netflix's bold investment in non-English language cinema is paying unprecedented dividends as international films capture massive global audiences. The German film **All Quiet on the Western Front** demonstrated remarkable staying power with 39 consecutive weeks in the global Top 10, while the Spanish film **Society of the Snow** became one of the most-watched non-English films in Netflix history. These successes prove that compelling storytelling transcends language barriers. Viewers across 94 countries are enthusiastically embracing subtitled content. Netflix's commitment to producing authentic, locally-rooted stories for international markets has established the platform as the premier destination for world cinema, demonstrating that great films can originate anywhere and resonate everywhere.
 
