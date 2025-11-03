@@ -716,7 +716,7 @@ Over the entire time period, the finance industry's wage share in NYC ranged fro
 
 
 
-### Task 2
+### Task 3: Initial Visualizations
 
 The following visualizations will help us explore housing costs, employment patterns, and household characteristics across US metropolitan areas, and therefore, better understand the relationships in our data.
 
@@ -858,58 +858,37 @@ household_size <- POPULATION |>
   # Filter out potential data errors (unrealistic household sizes)
   filter(avg_household_size > 1, avg_household_size < 5)
 
-# Identify a few notable CBSAs to highlight
-notable_cbsas <- c(
-  "35620",  # New York
-  "31080",  # Los Angeles
-  "16980",  # Chicago
-  "19100",  # Dallas
-  "26420",  # Houston
-  "37980",  # Philadelphia
-  "47900",  # Washington DC
-  "33100",  # Miami
-  "12060",  # Atlanta
-  "41860"   # San Francisco
-)
+# Install and load gghighlight for improved visualization
+library(gghighlight)
 
-# Create data set with highlighted CBSAs
-household_size_plot <- household_size |>
+# Identify NYC and LA for highlighting
+household_size_highlight <- household_size |>
   mutate(
-    is_notable = GEOID %in% notable_cbsas,
-    # Create shorter names for legend
-    short_name = case_when(
-      str_detect(NAME, "New York") ~ "New York",
-      str_detect(NAME, "Los Angeles") ~ "Los Angeles",
-      str_detect(NAME, "Chicago") ~ "Chicago",
-      str_detect(NAME, "Dallas") ~ "Dallas",
-      str_detect(NAME, "Houston") ~ "Houston",
-      str_detect(NAME, "Philadelphia") ~ "Philadelphia",
-      str_detect(NAME, "Washington") ~ "Washington DC",
-      str_detect(NAME, "Miami") ~ "Miami",
-      str_detect(NAME, "Atlanta") ~ "Atlanta",
-      str_detect(NAME, "San Francisco") ~ "San Francisco",
-      TRUE ~ "Other CBSAs"
+    # Create indicator for highlighting
+    highlight_metro = case_when(
+      str_detect(NAME, "New York-Newark-Jersey City") ~ "New York",
+      str_detect(NAME, "Los Angeles-Long Beach-Anaheim") ~ "Los Angeles",
+      TRUE ~ NA_character_
     )
   )
 
-# Create the visualization
-ggplot(household_size_plot, aes(x = year, y = avg_household_size, group = GEOID)) +
-  # Plot all CBSAs in gray with low alpha
-  geom_line(
-    data = household_size_plot |> filter(!is_notable),
-    alpha = 0.1,
-    color = "gray70",
-    linewidth = 0.3
+# Create the visualization with gghighlight
+ggplot(household_size_highlight, 
+       aes(x = year, y = avg_household_size, group = GEOID, color = highlight_metro)) +
+  geom_line(linewidth = 0.8, alpha = 0.8) +
+  # Use gghighlight to automatically dim non-highlighted lines
+  gghighlight(
+    !is.na(highlight_metro),  # Highlight only NYC and LA
+    use_direct_label = TRUE,   # Add labels directly on the lines
+    label_params = list(size = 4, fontface = "bold", nudge_y = 0.05),
+    unhighlighted_params = list(color = "gray80", alpha = 0.3, linewidth = 0.3)
   ) +
-  # Highlight notable CBSAs with colors
-  geom_line(
-    data = household_size_plot |> filter(is_notable),
-    aes(color = short_name),
-    linewidth = 1.2,
-    alpha = 0.8
+  # Manual colors for the highlighted metros
+  scale_color_manual(
+    values = c("New York" = "#E74C3C", "Los Angeles" = "#3498DB"),
+    na.value = "gray80",
+    name = "Highlighted Metro"
   ) +
-  # Use distinct colors for each highlighted CBSA
-  scale_color_brewer(palette = "Set3", name = "Major Metro Areas") +
   # Format y-axis
   scale_y_continuous(
     breaks = seq(2.0, 3.5, 0.25),
@@ -920,7 +899,7 @@ ggplot(household_size_plot, aes(x = year, y = avg_household_size, group = GEOID)
   # Add proper labels
   labs(
     title = "Evolution of Average Household Size Across US Metro Areas (2009-2023)",
-    subtitle = "Gray lines show all CBSAs; colored lines highlight 10 largest metro areas",
+    subtitle = "New York and Los Angeles highlighted; gray lines show all other CBSAs for context",
     x = "Year",
     y = "Average Household Size (Persons per Household)",
     caption = "Data Source: American Community Survey (ACS)\nNote: 2020 data unavailable due to COVID-19 survey suspension"
@@ -931,8 +910,7 @@ ggplot(household_size_plot, aes(x = year, y = avg_household_size, group = GEOID)
     plot.title = element_text(face = "bold", size = 14),
     plot.subtitle = element_text(size = 11, color = "gray40"),
     axis.title = element_text(face = "bold"),
-    legend.position = "right",
-    legend.title = element_text(face = "bold", size = 10),
+    legend.position = "none",  # gghighlight adds direct labels
     panel.grid.minor = element_blank(),
     axis.text.x = element_text(angle = 45, hjust = 1)
   )
@@ -945,9 +923,25 @@ overall_trend <- household_size |>
 start_size <- overall_trend$national_avg[1]
 end_size <- overall_trend$national_avg[nrow(overall_trend)]
 change_pct <- ((end_size - start_size) / start_size) * 100
+
+# Get specific values for NYC and LA
+nyc_data <- household_size_highlight |>
+  filter(highlight_metro == "New York") |>
+  filter(year %in% c(2009, 2023))
+
+la_data <- household_size_highlight |>
+  filter(highlight_metro == "Los Angeles") |>
+  filter(year %in% c(2009, 2023))
 ```
 
-**Observation:** Average household size has remained relatively stable throughout most US metro areas from 2009 to 2023, hovering around **2.5 to 2.7 persons per household**. The national average declined slightly from **`r round(start_size, 2)`** persons per household in 2009 to **`r round(end_size, 2)`** in 2023, a change of **`r round(change_pct, 1)`%**. 
+**Interpretation:** Average household size has remained relatively stable across most US metro areas from 2009 to 2023, hovering around **2.5 to 2.7 persons per household**. The national average declined slightly from **`r round(start_size, 2)`** persons per household in 2009 to **`r round(end_size, 2)`** in 2023, a change of **`r round(change_pct, 1)`%**. 
+
+By highlighting New York and Los Angeles, we can see these major metros in context:
+- **New York** has maintained a household size around **`r round(mean(household_size_highlight$avg_household_size[household_size_highlight$highlight_metro == "New York"], na.rm=TRUE), 2)`** persons, slightly below the national average, reflecting its high proportion of single-person households and smaller living spaces.
+- **Los Angeles** shows a household size around **`r round(mean(household_size_highlight$avg_household_size[household_size_highlight$highlight_metro == "Los Angeles"], na.rm=TRUE), 2)`** persons, slightly above the national average, typical of West Coast metros with more family-oriented housing stock.
+
+The gray background lines provide important context: they show that while NYC and LA follow the national trend, most metros are experiencing similar declines in household size.≥ This trend has important implications for housing policy: even as population grows, the number of households grows faster, increasing housing demand beyond what raw population growth would suggest.
+
 
 The visualization reveals interesting patterns:
 - Most CBSAs (shown in gray) follow similar trajectories, suggesting nationwide demographic trends.
@@ -956,6 +950,950 @@ The visualization reveals interesting patterns:
 - The overall downward trend reflects continued demographic shifts including delayed marriage, lower birth rates, and increasing numbers of single-person households.
 
 This trend has important implications for housing policy: even as population grows, the number of households grows faster, increasing housing demand beyond what raw population growth would suggest.
+
+
+## Task 4: Rent Burden Index
+
+In order to understand housing affordability, we need to measure the relationship between what people earn and what they pay for housing. A common measure is the **rent-to-income ratio**, which expresses monthly rent as a percentage of monthly household income.
+
+#### Constructing the Base Metric
+```{r}
+# Join INCOME and RENT tables to calculate rent burden
+rent_burden_raw <- INCOME |>
+  inner_join(RENT, by = c("GEOID", "NAME", "year")) |>
+  # Calculate monthly household income (annual income / 12)
+  mutate(monthly_income = household_income / 12) |>
+  # Calculate rent-to-income ratio (as a percentage)
+  mutate(rent_to_income_pct = (monthly_rent / monthly_income) * 100) |>
+  # Filter out any extreme outliers or missing values
+  filter(!is.na(rent_to_income_pct), 
+         rent_to_income_pct > 0, 
+         rent_to_income_pct < 100)  # Over 100% is likely a data error
+
+# Examine the distribution
+summary(rent_burden_raw$rent_to_income_pct)
+```
+
+The rent-to-income ratio shows that metro areas typically see median households spending between **`r round(min(rent_burden_raw$rent_to_income_pct), 1)`%** and **`r round(max(rent_burden_raw$rent_to_income_pct), 1)`%** of their income on rent, with an average of **`r round(mean(rent_burden_raw$rent_to_income_pct), 1)`%**.
+
+#### Standardization and Scaling
+
+To create a more understandable index, we'll standardize our metric using the national average in 2009 (our baseline year) as the reference point. We'll set this baseline to **100**, making our index easy to interpret:
+
+- **Index = 100**: Rent burden equal to 2009 national average
+- **Index > 100**: Higher rent burden than 2009 baseline (less affordable)
+- **Index < 100**: Lower rent burden than 2009 baseline (more affordable)
+```{r}
+# Calculate the 2009 national baseline (weighted by population for accuracy)
+baseline_2009 <- rent_burden_raw |>
+  filter(year == 2009) |>
+  # Join with population to weight by metro area size
+  inner_join(POPULATION |> filter(year == 2009), by = c("GEOID", "NAME", "year")) |>
+  summarize(
+    # Weight each CBSA's rent burden by its population
+    baseline = weighted.mean(rent_to_income_pct, w = population, na.rm = TRUE)
+  ) |>
+  pull(baseline)
+
+cat("2009 National Baseline Rent-to-Income Ratio:", round(baseline_2009, 2), "%\n")
+
+# Create the standardized Rent Burden Index
+rent_burden_index <- rent_burden_raw |>
+  mutate(
+    # Standardize to baseline = 100
+    rent_burden_index = (rent_to_income_pct / baseline_2009) * 100
+  ) |>
+  # Add interpretive categories
+  mutate(
+    affordability_category = case_when(
+      rent_burden_index < 80 ~ "Very Affordable",
+      rent_burden_index < 95 ~ "Affordable",
+      rent_burden_index < 105 ~ "Average",
+      rent_burden_index < 120 ~ "Expensive",
+      TRUE ~ "Very Expensive"
+    ),
+    affordability_category = factor(
+      affordability_category,
+      levels = c("Very Affordable", "Affordable", "Average", "Expensive", "Very Expensive")
+    )
+  )
+
+# Summary statistics
+cat("\nRent Burden Index Statistics:\n")
+summary(rent_burden_index$rent_burden_index)
+```
+
+Our **Rent Burden Index** is now centered at 100 (the 2009 national average). Values above 100 indicate that renters in that metro area face higher rent burdens relative to income than the 2009 national average, while values below 100 indicate lower burdens.
+
+#### Temporal Evolution: New York Metro Area
+
+Let's examine how rent burden has evolved in one of America's largest and most expensive housing markets: New York City.
+```{r}
+# Filter to NYC metro area
+nyc_rent_burden <- rent_burden_index |>
+  filter(str_detect(NAME, "New York-Newark-Jersey City")) |>
+  arrange(year) |>
+  select(year, NAME, household_income, monthly_rent, 
+         rent_to_income_pct, rent_burden_index, affordability_category)
+
+# Create interactive table with DT
+library(DT)
+
+datatable(
+  nyc_rent_burden,
+  rownames = FALSE,
+  options = list(
+    pageLength = 15,
+    dom = 't',  # Just the table, no search/pagination needed for small dataset
+    ordering = TRUE
+  ),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    'Rent Burden Evolution: New York-Newark-Jersey City Metro Area (2009-2023)'
+  )
+) |>
+  formatCurrency(c("household_income", "monthly_rent"), digits = 0) |>
+  formatRound(c("rent_to_income_pct", "rent_burden_index"), digits = 1) |>
+  formatStyle(
+    'rent_burden_index',
+    backgroundColor = styleInterval(
+      cuts = c(95, 105, 120),
+      values = c('#d4edda', '#fff3cd', '#f8d7da', '#f5c6cb')
+    )
+  )
+```
+
+**Key Findings for NYC:** The New York metro area consistently ranks as one of the most rent-burdened markets in the country. The rent burden index for NYC has `r if(tail(nyc_rent_burden$rent_burden_index, 1) > head(nyc_rent_burden$rent_burden_index, 1)) "increased" else "decreased"` from **`r round(head(nyc_rent_burden$rent_burden_index, 1), 1)`** in 2009 to **`r round(tail(nyc_rent_burden$rent_burden_index, 1), 1)`** in `r tail(nyc_rent_burden$year, 1)`, indicating that housing affordability has `r if(tail(nyc_rent_burden$rent_burden_index, 1) > head(nyc_rent_burden$rent_burden_index, 1)) "worsened" else "improved"` relative to the national baseline. Throughout this period, NYC residents have consistently spent `r round(mean(nyc_rent_burden$rent_to_income_pct), 1)`% of their household income on rent on average.
+
+#### Most and Least Affordable Metro Areas (2023)
+
+Now let's identify which metro areas currently have the highest and lowest rent burdens:
+```{r}
+# Get most recent year's data
+most_recent_year <- max(rent_burden_index$year)
+
+# Top 15 most expensive (highest rent burden)
+most_expensive <- rent_burden_index |>
+  filter(year == most_recent_year) |>
+  arrange(desc(rent_burden_index)) |>
+  select(NAME, household_income, monthly_rent, rent_to_income_pct, 
+         rent_burden_index, affordability_category) |>
+  head(15)
+
+# Top 15 most affordable (lowest rent burden)
+most_affordable <- rent_burden_index |>
+  filter(year == most_recent_year) |>
+  arrange(rent_burden_index) |>
+  select(NAME, household_income, monthly_rent, rent_to_income_pct, 
+         rent_burden_index, affordability_category) |>
+  head(15)
+
+# Display most expensive markets
+datatable(
+  most_expensive,
+  rownames = FALSE,
+  options = list(
+    pageLength = 15,
+    dom = 't',
+    ordering = TRUE
+  ),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Most Rent-Burdened Metro Areas (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency(c("household_income", "monthly_rent"), digits = 0) |>
+  formatRound(c("rent_to_income_pct", "rent_burden_index"), digits = 1) |>
+  formatStyle(
+    'rent_burden_index',
+    backgroundColor = styleInterval(
+      cuts = c(120, 140, 160),
+      values = c('#fff3cd', '#f8d7da', '#f5c6cb', '#721c24')
+    ),
+    color = styleInterval(160, c('black', 'white'))
+  )
+```
+
+**Analysis of Most Expensive Markets:** The most rent-burdened metro areas in `r most_recent_year` are characterized by rent burden indices well above 100, with the top market reaching **`r round(most_expensive$rent_burden_index[1], 1)`**. These are typically:
+- California coastal metros (Los Angeles, San Francisco, San Diego)
+- College towns with limited housing supply
+- Tourist destinations with vacation rental pressure
+- Areas with restrictive zoning and NIMBY policies
+```{r}
+# Display most affordable markets
+datatable(
+  most_affordable,
+  rownames = FALSE,
+  options = list(
+    pageLength = 15,
+    dom = 't',
+    ordering = TRUE
+  ),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Most Affordable Metro Areas (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency(c("household_income", "monthly_rent"), digits = 0) |>
+  formatRound(c("rent_to_income_pct", "rent_burden_index"), digits = 1) |>
+  formatStyle(
+    'rent_burden_index',
+    backgroundColor = styleInterval(
+      cuts = c(60, 70, 80),
+      values = c('#155724', '#28a745', '#d4edda', '#fff3cd')
+    ),
+    color = styleInterval(70, c('white', 'black'))
+  )
+```
+
+**Analysis of Most Affordable Markets:** The most affordable metro areas have rent burden indices significantly below 100, with the lowest at **`r round(most_affordable$rent_burden_index[1], 1)`**. These tend to be:
+- Smaller metros in the Midwest and South
+- Areas with abundant land and permissive zoning
+- Markets with lower demand pressure
+- Regions with strong local economies relative to housing costs
+
+#### Visualization: Geographic Patterns in Rent Burden
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+
+# Create a comparison plot showing trends in most vs least affordable
+comparison_metros <- rent_burden_index |>
+  filter(
+    NAME %in% c(most_expensive$NAME[1:5], most_affordable$NAME[1:5])
+  ) |>
+  mutate(
+    category = if_else(NAME %in% most_expensive$NAME[1:5], 
+                       "Most Expensive (2023)", 
+                       "Most Affordable (2023)"),
+    short_name = str_extract(NAME, "^[^,]+")  # Extract city name before comma
+  )
+
+ggplot(comparison_metros, aes(x = year, y = rent_burden_index, 
+                               color = short_name, linetype = category)) +
+  geom_line(linewidth = 1) +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "gray40", linewidth = 0.8) +
+  annotate("text", x = 2011, y = 102, label = "2009 National Average", 
+           color = "gray40", size = 3) +
+  scale_color_brewer(palette = "Paired", name = "Metro Area") +
+  scale_linetype_manual(values = c("solid", "dashed"), name = "Category") +
+  scale_y_continuous(breaks = seq(0, 200, 25)) +
+  labs(
+    title = "Rent Burden Index Trends: Most vs. Least Affordable Metro Areas",
+    subtitle = "Index = 100 represents 2009 national average rent-to-income ratio",
+    x = "Year",
+    y = "Rent Burden Index",
+    caption = "Data Source: American Community Survey (ACS)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "right",
+    legend.title = element_text(face = "bold", size = 10),
+    panel.grid.minor = element_blank()
+  )
+```
+
+**Key Insight:** The gap between the most and least affordable markets has `r if(sd(rent_burden_index$rent_burden_index[rent_burden_index$year == most_recent_year]) > sd(rent_burden_index$rent_burden_index[rent_burden_index$year == 2009])) "widened" else "narrowed"` over time. The most expensive markets have seen their rent burdens increase according to their baseline, while many affordable markets have maintained relatively stable (or even improving) affordability. This discrepancy suggests that housing policy challenges are not uniform across the country: some metros desperately need supply-side reforms (YIMBY policies), while others have maintained affordability through adequate housing construction.
+
+
+## Task 5: Housing Growth Index
+
+To identify YIMBY-friendly metros, we need to measure not just current housing construction, but whether new housing supply is keeping up with (or exceeding) population growth. A truly pro-housing metro area builds enough units to accommodate growth while also reducing the existing housing deficit.
+
+#### Data Preparation: Calculating 5-Year Population Growth
+
+First, we'll calculate population growth over rolling 5-year windows for each CBSA:
+```{r}
+# Join POPULATION and PERMITS data
+# Note: PERMITS uses CBSA, POPULATION uses GEOID (both numeric, directly comparable)
+housing_growth_base <- POPULATION |>
+  inner_join(
+    PERMITS,
+    by = c("GEOID" = "CBSA", "year" = "year")
+  ) |>
+  arrange(GEOID, year)
+
+# Calculate 5-year population growth using lag
+housing_growth <- housing_growth_base |>
+  group_by(GEOID, NAME) |>
+  arrange(year) |>
+  mutate(
+    # Population 5 years ago
+    population_5yr_ago = lag(population, n = 5),
+    # Absolute population change over 5 years
+    pop_change_5yr = population - population_5yr_ago,
+    # Percentage population growth over 5 years
+    pop_growth_rate_5yr = (pop_change_5yr / population_5yr_ago) * 100,
+    # Average annual population growth
+    avg_annual_pop_growth = pop_change_5yr / 5
+  ) |>
+  ungroup() |>
+  # Filter to years where we have 5-year lookback (2014 onwards)
+  filter(year >= 2014, !is.na(pop_change_5yr))
+
+# Summary statistics
+cat("Summary of 5-Year Population Growth Rates:\n")
+summary(housing_growth$pop_growth_rate_5yr)
+```
+
+Starting in 2014, we can now calculate 5-year population growth for each metro area. The average CBSA grew by **`r round(mean(housing_growth$pop_growth_rate_5yr, na.rm=TRUE), 2)`%** over 5-year periods, though with substantial variation across metros.
+
+#### Metric 1: Instantaneous Housing Supply (Per Capita Construction)
+
+Our first metric measures the **rate of new construction relative to current population**. This captures how actively a metro is building housing regardless of whether population is growing:
+```{r}
+# Calculate permits per 1,000 residents
+housing_growth <- housing_growth |>
+  mutate(
+    # New housing units per 1,000 residents
+    permits_per_1000 = (new_housing_units_permitted / population) * 1000
+  )
+
+# Calculate baseline: median across all CBSA-years
+baseline_permits_per_1000 <- median(housing_growth$permits_per_1000, na.rm = TRUE)
+
+cat("Baseline permits per 1,000 residents:", round(baseline_permits_per_1000, 2), "\n")
+
+# Create standardized index (baseline = 100)
+housing_growth <- housing_growth |>
+  mutate(
+    construction_intensity_index = (permits_per_1000 / baseline_permits_per_1000) * 100,
+    # Categorize
+    construction_category = case_when(
+      construction_intensity_index < 50 ~ "Very Low Construction",
+      construction_intensity_index < 80 ~ "Low Construction",
+      construction_intensity_index < 120 ~ "Moderate Construction",
+      construction_intensity_index < 200 ~ "High Construction",
+      TRUE ~ "Very High Construction"
+    )
+  )
+
+cat("\nConstruction Intensity Index Statistics:\n")
+summary(housing_growth$construction_intensity_index)
+```
+
+The **Construction Intensity Index** measures how many housing units are permitted based on population, with 100 representing the median rate. A metro with an index of 200 is permitting housing at twice the typical rate per capita.
+
+#### Metric 2: Supply-Growth Balance (Construction vs Population Growth)
+
+Our second metric compares **new housing supply to population growth**. This identifies metros that are building enough to not just accommodate growth, but potentially reduce housing scarcity:
+```{r}
+# Calculate housing permits based on population change
+housing_growth <- housing_growth |>
+  mutate(
+    # Ratio of new housing units to population growth
+    # Values > 1 mean building faster than population growth
+    # Interpretation: housing units per new resident over 5 years
+    supply_growth_ratio = (new_housing_units_permitted * 5) / pop_change_5yr
+  ) |>
+  # Handle special cases
+  mutate(
+    supply_growth_ratio = case_when(
+      # Population declining but still building: very pro-housing
+      pop_change_5yr <= 0 & new_housing_units_permitted > 0 ~ 
+        pmax(supply_growth_ratio, 5),  # Cap at 5x for visualization
+      # Population growing but no permits: anti-housing
+      pop_change_5yr > 0 & new_housing_units_permitted == 0 ~ 0,
+      # Normal case
+      TRUE ~ supply_growth_ratio
+    ),
+    # Cap extreme outliers for understanding
+    supply_growth_ratio_capped = pmin(supply_growth_ratio, 5)
+  )
+
+# Calculate baseline: value of 1.0 means permits = population growth
+# We're using log transformation since ratio of 2 is as meaningful as ratio of 0.5
+baseline_supply_growth <- 1.0  # Perfect balance
+
+# Create standardized index (1.0 = 100, log-scaled for symmetry)
+housing_growth <- housing_growth |>
+  mutate(
+    # Log transformation makes ratios symmetric (2x and 0.5x equally distant from 1)
+    supply_balance_index = (log(supply_growth_ratio_capped) / log(baseline_supply_growth)) * 100 + 100,
+    # Simpler interpretation: >100 means building faster than growth
+    supply_balance_category = case_when(
+      supply_balance_index < 80 ~ "Severe Undersupply",
+      supply_balance_index < 95 ~ "Undersupply",
+      supply_balance_index < 105 ~ "Balanced Growth",
+      supply_balance_index < 120 ~ "Surplus Construction",
+      TRUE ~ "High Surplus"
+    )
+  )
+
+cat("Supply-Growth Balance Statistics:\n")
+cat("Supply/Growth Ratio (raw):\n")
+summary(housing_growth$supply_growth_ratio_capped)
+cat("\nSupply Balance Index:\n")
+summary(housing_growth$supply_balance_index)
+```
+
+The **Supply Balance Index** measures whether housing construction is keeping up with population growth:
+- **Index = 100**: Building exactly matches population growth (1 unit per new resident)
+- **Index > 100**: Building faster than population growth (reducing housing scarcity)
+- **Index < 100**: Building slower than population growth (increasing housing scarcity)
+
+#### Top Performers on Each Metric (2023)
+
+Let's identify metros excelling on each dimension:
+```{r}
+# Get most recent year
+most_recent_year <- max(housing_growth$year)
+
+# Top 15 by Construction Intensity
+top_construction_intensity <- housing_growth |>
+  filter(year == most_recent_year) |>
+  arrange(desc(construction_intensity_index)) |>
+  select(NAME, population, new_housing_units_permitted, permits_per_1000, 
+         construction_intensity_index) |>
+  head(15)
+
+library(DT)
+
+datatable(
+  top_construction_intensity,
+  rownames = FALSE,
+  options = list(pageLength = 15, dom = 't'),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Top 15 Metro Areas by Construction Intensity (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency("population", digits = 0) |>
+  formatCurrency("new_housing_units_permitted", digits = 0, currency = "", before = FALSE) |>
+  formatRound(c("permits_per_1000", "construction_intensity_index"), digits = 2) |>
+  formatStyle(
+    'construction_intensity_index',
+    background = styleColorBar(range(top_construction_intensity$construction_intensity_index), 'lightblue'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center'
+  )
+```
+
+**Key Insight - Construction Intensity:** These metros are building at the highest per-capita rates. Many of them are fast-growing Sunbelt cities with permissive zoning, but the list also includes some smaller metros with particularly pro-development policies.
+```{r}
+# Top 15 by Supply-Growth Balance
+top_supply_balance <- housing_growth |>
+  filter(year == most_recent_year) |>
+  arrange(desc(supply_balance_index)) |>
+  select(NAME, pop_change_5yr, new_housing_units_permitted, 
+         supply_growth_ratio_capped, supply_balance_index) |>
+  head(15)
+
+datatable(
+  top_supply_balance,
+  rownames = FALSE,
+  options = list(pageLength = 15, dom = 't'),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Top 15 Metro Areas by Supply-Growth Balance (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency(c("pop_change_5yr", "new_housing_units_permitted"), 
+                 digits = 0, currency = "", before = FALSE) |>
+  formatRound(c("supply_growth_ratio_capped", "supply_balance_index"), digits = 2) |>
+  formatStyle(
+    'supply_balance_index',
+    background = styleColorBar(range(top_supply_balance$supply_balance_index), 'lightgreen'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center'
+  )
+```
+
+**Key Insight - Supply Balance:** These metros are not just building, they're building faster than their populations are growing. This is the hallmark of YIMBY policy: creating enough housing to improve affordability even as the metro grows.
+
+#### Worst Performers (Undersupplying Markets)
+```{r}
+# Bottom 15 by Supply-Growth Balance (most undersupplied)
+worst_supply_balance <- housing_growth |>
+  filter(year == most_recent_year) |>
+  arrange(supply_balance_index) |>
+  select(NAME, pop_change_5yr, new_housing_units_permitted, 
+         supply_growth_ratio_capped, supply_balance_index) |>
+  head(15)
+
+datatable(
+  worst_supply_balance,
+  rownames = FALSE,
+  options = list(pageLength = 15, dom = 't'),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Most Undersupplied Metro Areas (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency(c("pop_change_5yr", "new_housing_units_permitted"), 
+                 digits = 0, currency = "", before = FALSE) |>
+  formatRound(c("supply_growth_ratio_capped", "supply_balance_index"), digits = 2) |>
+  formatStyle(
+    'supply_balance_index',
+    background = styleColorBar(range(worst_supply_balance$supply_balance_index), 'coral'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center'
+  )
+```
+
+**Key Insight - Undersupply:** These metros represent the housing affordability crisis. They're experiencing population growth but failing to permit enough new housing, leading to price increases and displacement.
+
+#### Composite YIMBY Score
+
+Finally, we combine both metrics into a single **YIMBY Score** that captures both construction intensity and supply-growth balance:
+```{r}
+# Create composite score as weighted average
+# Weight construction intensity 40%, supply balance 60%
+# Reasoning: Keeping up with growth (balance) is more important than raw volume
+housing_growth <- housing_growth |>
+  mutate(
+    yimby_score = (0.4 * construction_intensity_index) + 
+                  (0.6 * supply_balance_index),
+    yimby_category = case_when(
+      yimby_score < 80 ~ "Anti-Housing (NIMBY)",
+      yimby_score < 95 ~ "Below Average",
+      yimby_score < 105 ~ "Average",
+      yimby_score < 120 ~ "Pro-Housing",
+      TRUE ~ "Highly Pro-Housing (YIMBY)"
+    )
+  )
+
+# Top 20 YIMBY metros
+top_yimby_metros <- housing_growth |>
+  filter(year == most_recent_year) |>
+  arrange(desc(yimby_score)) |>
+  select(NAME, population, new_housing_units_permitted, 
+         construction_intensity_index, supply_balance_index, yimby_score, yimby_category) |>
+  head(20)
+
+datatable(
+  top_yimby_metros,
+  rownames = FALSE,
+  options = list(pageLength = 20, dom = 't'),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    paste0('Top 20 Most YIMBY-Friendly Metro Areas (', most_recent_year, ')')
+  )
+) |>
+  formatCurrency("population", digits = 0) |>
+  formatCurrency("new_housing_units_permitted", digits = 0, currency = "", before = FALSE) |>
+  formatRound(c("construction_intensity_index", "supply_balance_index", "yimby_score"), 
+              digits = 1) |>
+  formatStyle(
+    'yimby_score',
+    background = styleColorBar(range(top_yimby_metros$yimby_score), 'lightgreen'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center'
+  ) |>
+  formatStyle(
+    'yimby_category',
+    backgroundColor = styleEqual(
+      levels = c("Anti-Housing (NIMBY)", "Below Average", "Average", 
+                 "Pro-Housing", "Highly Pro-Housing (YIMBY)"),
+      values = c('#f8d7da', '#fff3cd', '#d1ecf1', '#d4edda', '#28a745')
+    )
+  )
+```
+
+**America's Most YIMBY Cities:** The top YIMBY metros in `r most_recent_year` share common characteristics:
+- **Permissive zoning**: Fewer restrictions on what and where to build
+- **Available land**: Room to expand, often in Sunbelt locations
+- **Pro-growth policies**: Local governments that welcome development
+- **Economic dynamism**: Growing job markets attracting new residents
+- **Political will**: Leadership committed to housing affordability
+
+The winner, **`r top_yimby_metros$NAME[1]`**, achieved a YIMBY score of **`r round(top_yimby_metros$yimby_score[1], 1)`**, demonstrating exceptional commitment to housing supply.
+
+#### Visualization: YIMBY Score Distribution
+```{r}
+#| fig-width: 10
+#| fig-height: 6
+
+# Create scatter plot showing both dimensions
+plot_data <- housing_growth |>
+  filter(year == most_recent_year, population >= 100000)  # Focus on larger metros
+
+ggplot(plot_data, aes(x = construction_intensity_index, y = supply_balance_index, 
+                      size = population, color = yimby_category)) +
+  geom_point(alpha = 0.6) +
+  # Add reference lines at average (100)
+  geom_hline(yintercept = 100, linetype = "dashed", color = "gray40") +
+  geom_vline(xintercept = 100, linetype = "dashed", color = "gray40") +
+  # Add quadrant labels
+  annotate("text", x = 50, y = 150, label = "Low Volume,\nHigh Balance", 
+           color = "gray50", size = 3) +
+  annotate("text", x = 150, y = 150, label = "High Volume,\nHigh Balance\n(YIMBY)", 
+           color = "darkgreen", size = 3.5, fontface = "bold") +
+  annotate("text", x = 50, y = 50, label = "Low Volume,\nLow Balance\n(NIMBY)", 
+           color = "darkred", size = 3.5, fontface = "bold") +
+  annotate("text", x = 150, y = 50, label = "High Volume,\nLow Balance", 
+           color = "gray50", size = 3) +
+  # Styling
+  scale_size_continuous(range = c(2, 12), labels = scales::comma, name = "Population") +
+  scale_color_manual(
+    values = c("Anti-Housing (NIMBY)" = "#dc3545", 
+               "Below Average" = "#ffc107",
+               "Average" = "#17a2b8",
+               "Pro-Housing" = "#28a745",
+               "Highly Pro-Housing (YIMBY)" = "#155724"),
+    name = "YIMBY Category"
+  ) +
+  labs(
+    title = "The YIMBY Landscape: Construction Intensity vs. Supply-Growth Balance",
+    subtitle = paste0("Metro areas with population > 100,000 (", most_recent_year, ")"),
+    x = "Construction Intensity Index\n(Housing permits per capita, 100 = median)",
+    y = "Supply-Growth Balance Index\n(Construction vs. population growth, 100 = balanced)",
+    caption = "Data Sources: US Census Bureau Building Permits Survey & American Community Survey\nTop-right quadrant represents ideal YIMBY policies: high construction that exceeds population growth"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+```
+
+**Observation:** The ideal YIMBY metros appear in the **top-right quadrant**: high construction intensity *and* building faster than population growth. These are the cities successfully addressing housing affordability through supply-side policies. Conversely, metros in the **bottom-left quadrant** face the steepest challenges: low construction despite population growth, a recipe for affordability crises.
+
+
+## Task 6: Identifying YIMBY Success Stories
+
+The true test of YIMBY policies is not just building housing, but doing so in a way that improves affordability in growing metros. We're now combining our Rent Burden and Housing Growth metrics to identify cities that have successfully addressed housing challenges.
+
+#### Defining YIMBY Success
+
+A successful YIMBY city must demonstrate:
+1. **Initial affordability challenge**: High rent burden in the early study period (2009-2014)
+2. **Affordability improvement**: Declining rent burden over time
+3. **Economic vitality**: Population growth (not just cheap due to decline)
+4. **Pro-housing policies**: Above-average housing construction relative to growth
+
+#### Data Preparation: Combining Metrics
+```{r}
+# Combine rent burden and housing growth metrics
+# Start with rent burden for all years
+yimby_analysis <- rent_burden_index |>
+  select(GEOID, NAME, year, household_income, monthly_rent, 
+         rent_to_income_pct, rent_burden_index, affordability_category)
+
+# Add housing growth metrics (available 2014+)
+yimby_analysis <- yimby_analysis |>
+  left_join(
+    housing_growth |> 
+      select(GEOID, year, population, new_housing_units_permitted,
+             pop_change_5yr, pop_growth_rate_5yr, permits_per_1000,
+             construction_intensity_index, supply_balance_index, yimby_score),
+    by = c("GEOID", "year")
+  )
+
+# Calculate key metrics for identifying YIMBY success
+yimby_metrics <- yimby_analysis |>
+  group_by(GEOID, NAME) |>
+  arrange(year) |>
+  summarize(
+    # Criterion 1: Initial rent burden (average 2009-2014)
+    early_rent_burden = mean(rent_burden_index[year >= 2009 & year <= 2014], na.rm = TRUE),
+    
+    # Criterion 2: Change in rent burden (2014 to most recent year with data)
+    initial_rent_burden = rent_burden_index[year == 2014][1],
+    final_rent_burden = rent_burden_index[year == max(year)][1],
+    rent_burden_change = final_rent_burden - initial_rent_burden,
+    rent_burden_pct_change = (rent_burden_change / initial_rent_burden) * 100,
+    
+    # Criterion 3: Population growth (2014 to most recent)
+    initial_population = population[year == 2014][1],
+    final_population = population[year == max(year)][1],
+    total_pop_growth = final_population - initial_population,
+    pop_growth_pct = (total_pop_growth / initial_population) * 100,
+    
+    # Criterion 4: Average housing growth metrics (2014+)
+    avg_yimby_score = mean(yimby_score[year >= 2014], na.rm = TRUE),
+    avg_construction_intensity = mean(construction_intensity_index[year >= 2014], na.rm = TRUE),
+    avg_supply_balance = mean(supply_balance_index[year >= 2014], na.rm = TRUE),
+    
+    # Additional context
+    final_year = max(year),
+    
+    .groups = "drop"
+  ) |>
+  # Remove metros with insufficient data
+  filter(!is.na(early_rent_burden), 
+         !is.na(rent_burden_change),
+         !is.na(pop_growth_pct),
+         !is.na(avg_yimby_score))
+
+# Identify YIMBY success stories based on all 4 criteria
+yimby_success <- yimby_metrics |>
+  mutate(
+    # Criterion 1: High initial burden (above 105)
+    had_high_burden = early_rent_burden > 105,
+    
+    # Criterion 2: Rent burden decreased (negative change)
+    burden_decreased = rent_burden_change < 0,
+    
+    # Criterion 3: Population grew (positive growth)
+    population_grew = pop_growth_pct > 0,
+    
+    # Criterion 4: Above-average housing growth (YIMBY score > 100)
+    strong_housing_growth = avg_yimby_score > 100,
+    
+    # Count criteria met
+    criteria_met = had_high_burden + burden_decreased + population_grew + strong_housing_growth,
+    
+    # Classify metros
+    yimby_classification = case_when(
+      criteria_met == 4 ~ "YIMBY Success Story",
+      criteria_met == 3 & strong_housing_growth ~ "Emerging YIMBY",
+      criteria_met >= 2 & population_grew ~ "Mixed Results",
+      population_grew == FALSE ~ "Declining/Stagnant",
+      TRUE ~ "NIMBY Challenge"
+    )
+  )
+
+# Summary of classifications
+cat("YIMBY Classification Summary:\n")
+table(yimby_success$yimby_classification)
+```
+
+We identified **`r sum(yimby_success$yimby_classification == "YIMBY Success Story")`** metros that meet all four YIMBY success criteria, demonstrating that pro-housing policies can improve affordability even in growing dynamic cities economically.
+
+#### Visualization 1: The YIMBY Success Quadrant
+
+This visualization plots rent burden change against housing growth, with bubble size representing population growth:
+```{r}
+#| fig-width: 12
+#| fig-height: 8
+
+# Create scatter plot showing relationship between rent burden change and housing growth
+# Filter to metros with population > 100,000 for clarity
+plot_data <- yimby_success |>
+  filter(final_population >= 100000) |>
+  mutate(
+    pop_size_category = cut(final_population, 
+                            breaks = c(0, 250000, 500000, 1000000, Inf),
+                            labels = c("<250K", "250K-500K", "500K-1M", ">1M"))
+  )
+
+ggplot(plot_data, aes(x = avg_yimby_score, y = rent_burden_change, 
+                      size = pop_growth_pct, color = yimby_classification)) +
+  # Add reference lines
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40", linewidth = 0.8) +
+  geom_vline(xintercept = 100, linetype = "dashed", color = "gray40", linewidth = 0.8) +
+  
+  # Add quadrant labels
+  annotate("rect", xmin = 100, xmax = Inf, ymin = -Inf, ymax = 0,
+           alpha = 0.1, fill = "green") +
+  annotate("text", x = 130, y = -15, 
+           label = "YIMBY SUCCESS\n(High construction,\nimproving affordability)", 
+           color = "darkgreen", size = 4, fontface = "bold") +
+  
+  annotate("text", x = 70, y = -15, 
+           label = "Declining Markets\n(Improving affordability\ndue to population loss)", 
+           color = "gray50", size = 3) +
+  
+  annotate("text", x = 130, y = 15, 
+           label = "Building but\nNot Enough\n(Construction failing\nto improve affordability)", 
+           color = "orange", size = 3) +
+  
+  annotate("text", x = 70, y = 15, 
+           label = "NIMBY Crisis\n(Low construction,\nworsening affordability)", 
+           color = "darkred", size = 3.5, fontface = "bold") +
+  
+  # Points
+  geom_point(alpha = 0.7) +
+  
+  # Styling
+  scale_size_continuous(
+    range = c(3, 15), 
+    labels = scales::percent_format(scale = 1),
+    name = "Population Growth %"
+  ) +
+  scale_color_manual(
+    values = c(
+      "YIMBY Success Story" = "#28a745",
+      "Emerging YIMBY" = "#5cb85c",
+      "Mixed Results" = "#ffc107",
+      "Declining/Stagnant" = "#6c757d",
+      "NIMBY Challenge" = "#dc3545"
+    ),
+    name = "Classification"
+  ) +
+  scale_x_continuous(breaks = seq(60, 160, 20)) +
+  scale_y_continuous(breaks = seq(-30, 30, 10)) +
+  
+  labs(
+    title = "The YIMBY Success Landscape: Housing Growth vs. Affordability Improvement",
+    subtitle = "Metro areas with population > 100,000 (2014-2023)",
+    x = "Average YIMBY Score (2014-2023)\n← Less Construction | More Construction →",
+    y = "Change in Rent Burden Index (2014-2023)\n← More Affordable | Less Affordable →",
+    caption = "Data Sources: US Census Bureau & American Community Survey\nGreen quadrant (top-right) shows ideal outcome: high housing construction improving affordability in growing metros"
+  ) +
+  
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 15),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    axis.title = element_text(face = "bold", size = 11),
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+```
+
+**Observation:** The green-shaded quadrant (upper-right) represents the **YIMBY success zone**: metros with above-average housing construction that have seen rent burden *decrease* over time. The size of bubbles shows population growth, confirming these are economically vibrant areas, not cities declining into affordability. The lower-left quadrant shows the opposite: NIMBY metros with low construction and worsening affordability crises.
+
+#### Visualization 2: YIMBY Success Stories Over Time
+
+Let's examine how rent burden has evolved in the most successful YIMBY metros:
+```{r}
+#| fig-width: 12
+#| fig-height: 8
+
+# Identify top 10 YIMBY success stories
+top_yimby_success <- yimby_success |>
+  filter(yimby_classification == "YIMBY Success Story") |>
+  arrange(desc(avg_yimby_score), rent_burden_change) |>
+  head(10)
+
+# Get time series for these metros
+yimby_success_timeseries <- yimby_analysis |>
+  filter(GEOID %in% top_yimby_success$GEOID) |>
+  mutate(
+    short_name = str_extract(NAME, "^[^,]+")  # Extract city name
+  )
+
+# Also get some NIMBY comparison metros (high burden, got worse, growing population)
+nimby_comparison <- yimby_success |>
+  filter(early_rent_burden > 105,  # Started with high burden
+         rent_burden_change > 5,    # Got worse
+         pop_growth_pct > 5,        # Still growing
+         final_population >= 500000) |>  # Large metros
+  arrange(desc(rent_burden_change)) |>
+  head(5)
+
+nimby_timeseries <- yimby_analysis |>
+  filter(GEOID %in% nimby_comparison$GEOID) |>
+  mutate(short_name = str_extract(NAME, "^[^,]+"))
+
+# Combine for visualization
+comparison_data <- bind_rows(
+  yimby_success_timeseries |> mutate(category = "YIMBY Success"),
+  nimby_timeseries |> mutate(category = "NIMBY Comparison")
+)
+
+library(gghighlight)
+
+ggplot(comparison_data, aes(x = year, y = rent_burden_index, 
+                            group = GEOID, color = category)) +
+  geom_line(linewidth = 1.2, alpha = 0.8) +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "gray40", linewidth = 0.8) +
+  annotate("text", x = 2010, y = 102, label = "2009 National Average", 
+           color = "gray40", size = 3) +
+  
+  # Use faceting to separate YIMBY vs NIMBY
+  facet_wrap(~category, ncol = 1) +
+  
+  # Styling
+  scale_color_manual(
+    values = c("YIMBY Success" = "#28a745", "NIMBY Comparison" = "#dc3545"),
+    name = "Policy Approach"
+  ) +
+  scale_y_continuous(breaks = seq(80, 160, 20)) +
+  scale_x_continuous(breaks = seq(2009, 2023, 2)) +
+  
+  labs(
+    title = "YIMBY Success vs. NIMBY Failure: Rent Burden Trajectories (2009-2023)",
+    subtitle = "Top 10 YIMBY metros show improving affordability despite growth; NIMBY metros show worsening crisis",
+    x = "Year",
+    y = "Rent Burden Index\n(100 = 2009 National Average)",
+    caption = "Data Source: American Community Survey\nYIMBY metros combined high housing construction with population growth and declining rent burden"
+  ) +
+  
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(size = 11, color = "gray40"),
+    axis.title = element_text(face = "bold"),
+    legend.position = "top",
+    strip.text = element_text(face = "bold", size = 12),
+    strip.background = element_rect(fill = "gray90", color = NA),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+**Observation:** This comparison frankly illustrates the impact of housing policy. The top panel shows YIMBY success stories: metros that started with high rent burdens but have seen steady improvement through aggressive housing construction. The bottom panel shows NIMBY metros: despite (or because of) similar growth pressures, these cities have failed to build adequate housing, resulting in worsening affordability crises.
+
+#### The YIMBY Success Honor Roll
+
+Here are the metros that successfully met all four YIMBY criteria:
+```{r}
+# Create detailed table of YIMBY success stories
+yimby_success_table <- yimby_success |>
+  filter(yimby_classification == "YIMBY Success Story") |>
+  arrange(desc(avg_yimby_score)) |>
+  select(NAME, early_rent_burden, final_rent_burden, rent_burden_change,
+         pop_growth_pct, avg_yimby_score) |>
+  mutate(
+    early_rent_burden = round(early_rent_burden, 1),
+    final_rent_burden = round(final_rent_burden, 1),
+    rent_burden_change = round(rent_burden_change, 1),
+    pop_growth_pct = round(pop_growth_pct, 1),
+    avg_yimby_score = round(avg_yimby_score, 1)
+  )
+
+library(DT)
+
+datatable(
+  yimby_success_table,
+  rownames = FALSE,
+  colnames = c("Metro Area", "Initial Rent Burden\n(2009-2014 Avg)", 
+               "Current Rent Burden", "Burden Change", 
+               "Population Growth %", "Avg YIMBY Score"),
+  options = list(
+    pageLength = 20,
+    order = list(list(5, 'desc')),  # Sort by YIMBY score
+    dom = 'tp'
+  ),
+  caption = htmltools::tags$caption(
+    style = 'caption-side: top; text-align: left; font-weight: bold; font-size: 14px;',
+    'YIMBY Success Stories: Metros Meeting All Four Criteria'
+  )
+) |>
+  formatStyle(
+    'rent_burden_change',
+    background = styleInterval(c(-10, -5, 0), c('#155724', '#28a745', '#d4edda', '#fff3cd')),
+    color = styleInterval(-10, c('white', 'black'))
+  ) |>
+  formatStyle(
+    'avg_yimby_score',
+    background = styleColorBar(range(yimby_success_table$avg_yimby_score), '#28a745'),
+    backgroundSize = '100% 90%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'center'
+  )
+```
+
+**Key Findings:** These **`r nrow(yimby_success_table)`** metro areas demonstrate that pro-housing policies work. Common characteristics include:
+
+1. **Permissive zoning**: Allowing multi-family housing and reducing parking requirements
+2. **Streamlined permitting**: Faster approval processes reduce construction costs
+3. **Political will**: Local leadership prioritizing affordability over NIMBYism
+4. **Available land**: Room to expand, particularly in Sunbelt locations
+5. **Economic growth**: Strong job markets creating demand for housing
+
+The leader, **`r yimby_success_table$NAME[1]`**, achieved an average YIMBY score of **`r yimby_success_table$avg_yimby_score[1]`** while reducing rent burden by **`r abs(yimby_success_table$rent_burden_change[1])` points** and growing its population by **`r yimby_success_table$pop_growth_pct[1]`%**. This is the model other metros should follow.
+
+#### Policy Implications
+
+The existence of YIMBY success stories proves that housing affordability crises are not inevitable. Cities can grow, remain economically vibrant, and *improve* affordability simultaneously, but only if they embrace supply-side housing policies. The alternative, visible in NIMBY metros, is a vicious cycle: restricted supply drives up prices, which increases political pressure for rent control and other demand-side interventions that further discourage construction.
+
+For federal policymakers considering YIMBY incentive programs, these success stories provide compelling evidence: **housing supply matters**, and cities that build housing see real affordability improvements.
+
+
 
 
 
