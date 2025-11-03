@@ -5,7 +5,7 @@ editor:
     mode: source
 format:
     html:
-        theme: superhero  # Change this to any theme below
+        theme:  darkly # Change this to any theme below
         code-fold: true
         code-summary: "Show Code"
         toc: true
@@ -2170,12 +2170,14 @@ cosponsor_rent_burden <- round(cosponsor_city$final_rent_burden, 0)
 
 ---
 
-<div style="border: 2px solid #2C3E50; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+<div style="border: 2px solid #2C3E50; padding: 20px; margin: 20px 0; background-color: #ffffff; color: #000000;">
 
-<h2 style="text-align: center; color: #2C3E50; margin-top: 0;">FEDERAL YIMBY INCENTIVE PROGRAM</h2>
-<h3 style="text-align: center; color: #7F8C8D; margin-top: -10px;">Policy Brief for Congressional Sponsors</h3>
+<h2 style="text-align: center; color: #2C3E50; margin-top: 0;">FEDERAL YIMBY INCENTIVE PROGRAM:<br>Building Affordable Communities Through Housing Supply</h2>
+<h3 style="text-align: center; color: #495057; margin-top: -10px;">Policy Brief for Congressional Sponsors</h3>
 
 <hr style="border: 1px solid #2C3E50;">
+
+<div style="color: #212529;">
 
 ### THE OPPORTUNITY
 
