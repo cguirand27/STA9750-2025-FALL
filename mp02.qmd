@@ -22,8 +22,7 @@ format:
 
 ## Introduction
 
-A suitable introduction goes here. In this mini-project, I intend to demonstrate
-my skills at Data Integration/Data Visualization/Metric Creation in an analysis of Official Statistics/Economic Data/Census Data data.
+America faces a housing affordability crisis, but some cities have found solutions. This project analyzes housing construction, rent burden, and population growth across US metro areas to identify successful pro-housing policies and recommend a federal YIMBY incentive program.
 
 ## Data Acquisition and Preparation
 
