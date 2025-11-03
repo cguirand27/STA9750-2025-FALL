@@ -5,7 +5,18 @@ editor:
     mode: source
 format:
     html:
+        theme: superhero  # Change this to any theme below
         code-fold: true
+        code-summary: "Show Code"
+        toc: true
+        toc-location: left
+        toc-depth: 3
+        toc-title: "Table Of Contents"
+        number-sections: true
+        number-depth: 3
+        smooth-scroll: true
+        link-external-newwindow: true
+        df-print: paged
 
 ---
 
@@ -334,7 +345,7 @@ WAGES <- get_bls_qcew_annual_averages()
 ```
 
 
-### Examining Dataset Structure and Identifying Join Keys
+### Examining Data set Structure and Identifying Join Keys
 Now that we have downloaded all necessary datasets, we need to examine their structure
 to identify the appropriate keys for joining them together in our analysis.
 
@@ -1896,19 +1907,335 @@ For federal policymakers considering YIMBY incentive programs, these success sto
 
 
 
+## Task 7: Policy Brief Development
+
+#### Identifying Congressional Sponsors
+```{r}
+# Find the best YIMBY success story (primary sponsor)
+primary_sponsor_city <- yimby_success |>
+  filter(yimby_classification == "YIMBY Success Story",
+         final_population >= 500000) |>  # Large enough to have congressional representation
+  arrange(desc(avg_yimby_score)) |>
+  slice(1)
+
+cat("PRIMARY SPONSOR CITY:\n")
+cat("Metro:", primary_sponsor_city$NAME, "\n")
+cat("YIMBY Score:", round(primary_sponsor_city$avg_yimby_score, 1), "\n")
+cat("Rent Burden Improvement:", round(primary_sponsor_city$rent_burden_change, 1), "points\n")
+cat("Population Growth:", round(primary_sponsor_city$pop_growth_pct, 1), "%\n\n")
+
+# Find a high-rent, low-construction NIMBY city (co-sponsor)
+cosponsor_city <- yimby_success |>
+  filter(early_rent_burden > 110,  # High rent burden
+         rent_burden_change > 0,    # Getting worse
+         avg_yimby_score < 95,      # Low housing growth
+         pop_growth_pct > 5,        # Still growing (shows need)
+         final_population >= 1000000) |>  # Major metro
+  arrange(desc(early_rent_burden)) |>
+  slice(1)
+
+cat("CO-SPONSOR CITY:\n")
+cat("Metro:", cosponsor_city$NAME, "\n")
+cat("Current Rent Burden:", round(cosponsor_city$final_rent_burden, 1), "\n")
+cat("YIMBY Score:", round(cosponsor_city$avg_yimby_score, 1), "(below average)\n")
+cat("Population Growth:", round(cosponsor_city$pop_growth_pct, 1), "%\n")
+```
+
+
+#### Identifying Congressional Sponsors
+```{r}
+# Find the best YIMBY success story (primary sponsor)
+# First try strict criteria
+primary_sponsor_city <- yimby_success |>
+  filter(yimby_classification == "YIMBY Success Story",
+         final_population >= 500000) |>
+  arrange(desc(avg_yimby_score)) |>
+  slice(1)
+
+# If no cities meet strict criteria, relax it
+if(nrow(primary_sponsor_city) == 0) {
+  cat("No YIMBY Success Stories with 500K+ population. Relaxing criteria...\n")
+  
+  primary_sponsor_city <- yimby_success |>
+    filter(yimby_classification %in% c("YIMBY Success Story", "Emerging YIMBY"),
+           final_population >= 250000) |>
+    arrange(desc(avg_yimby_score)) |>
+    slice(1)
+}
+
+# If still nothing, just take the highest YIMBY score with growth
+if(nrow(primary_sponsor_city) == 0) {
+  cat("Still no matches. Taking highest YIMBY score among growing metros...\n")
+  
+  primary_sponsor_city <- yimby_success |>
+    filter(population_grew == TRUE,
+           strong_housing_growth == TRUE,
+           final_population >= 250000) |>
+    arrange(desc(avg_yimby_score)) |>
+    slice(1)
+}
+
+cat("PRIMARY SPONSOR CITY:\n")
+cat("Metro:", primary_sponsor_city$NAME, "\n")
+cat("YIMBY Score:", round(primary_sponsor_city$avg_yimby_score, 1), "\n")
+cat("Rent Burden Change:", round(primary_sponsor_city$rent_burden_change, 1), "points\n")
+cat("Population Growth:", round(primary_sponsor_city$pop_growth_pct, 1), "%\n")
+cat("Classification:", primary_sponsor_city$yimby_classification, "\n\n")
+
+# Find a high-rent, low-construction NIMBY city (co-sponsor)
+cosponsor_city <- yimby_success |>
+  filter(early_rent_burden > 110,
+         rent_burden_change > 0,
+         avg_yimby_score < 95,
+         pop_growth_pct > 5,
+         final_population >= 500000) |>
+  arrange(desc(early_rent_burden)) |>
+  slice(1)
+
+# If no city meets all criteria, relax them
+if(nrow(cosponsor_city) == 0) {
+  cat("No cities meet strict NIMBY criteria. Relaxing...\n")
+  
+  cosponsor_city <- yimby_success |>
+    filter(early_rent_burden > 105,  # Lower threshold
+           avg_yimby_score < 100,     # Just below average
+           final_population >= 500000) |>
+    arrange(desc(final_rent_burden)) |>
+    slice(1)
+}
+
+cat("CO-SPONSOR CITY:\n")
+cat("Metro:", cosponsor_city$NAME, "\n")
+cat("Current Rent Burden:", round(cosponsor_city$final_rent_burden, 1), "\n")
+cat("YIMBY Score:", round(cosponsor_city$avg_yimby_score, 1), "\n")
+cat("Population Growth:", round(cosponsor_city$pop_growth_pct, 1), "%\n")
+cat("Classification:", cosponsor_city$yimby_classification, "\n")
+```
+
+
+
+#### Identifying Key Occupational Groups
+
+Now we'll analyze employment data to find occupations important in both cities.
+```{r}
+# Get CBSA codes for our sponsor cities
+primary_cbsa <- primary_sponsor_city$GEOID
+cosponsor_cbsa <- cosponsor_city$GEOID
+
+cat("Analyzing occupations for:\n")
+cat("Primary city:", primary_sponsor_city$NAME, "(CBSA:", primary_cbsa, ")\n")
+cat("Co-sponsor city:", cosponsor_city$NAME, "(CBSA:", cosponsor_cbsa, ")\n\n")
+
+# Prepare WAGES data
+WAGES_for_analysis <- WAGES |>
+  mutate(CBSA_code = as.numeric(str_remove(FIPS, "C")) * 10,
+         level2_code = floor(INDUSTRY / 100))
+
+# Get most recent year
+recent_year <- max(WAGES_for_analysis$YEAR)
+
+# Get employment data for both cities
+both_cities_employment <- WAGES_for_analysis |>
+  filter(CBSA_code %in% c(primary_cbsa, cosponsor_cbsa),
+         YEAR == recent_year) |>
+  left_join(
+    INDUSTRY_CODES |> 
+      select(level2_code, level2_title) |> 
+      distinct(),
+    by = "level2_code"
+  ) |>
+  filter(!is.na(level2_title)) |>
+  group_by(CBSA_code, level2_title) |>
+  summarize(
+    total_employment = sum(EMPLOYMENT, na.rm = TRUE),
+    avg_wage = weighted.mean(AVG_WAGE, w = EMPLOYMENT, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Separate data for each city
+primary_city_data <- both_cities_employment |>
+  filter(CBSA_code == primary_cbsa) |>
+  mutate(employment_share = total_employment / sum(total_employment) * 100) |>
+  rename(primary_employment = total_employment,
+         primary_wage = avg_wage,
+         primary_share = employment_share)
+
+cosponsor_city_data <- both_cities_employment |>
+  filter(CBSA_code == cosponsor_cbsa) |>
+  mutate(employment_share = total_employment / sum(total_employment) * 100) |>
+  rename(cosponsor_employment = total_employment,
+         cosponsor_wage = avg_wage,
+         cosponsor_share = employment_share)
+
+# Join to find common occupations
+common_sectors <- primary_city_data |>
+  inner_join(cosponsor_city_data, by = "level2_title") |>
+  filter(primary_share >= 2, cosponsor_share >= 2) |>  # At least 2% in both cities
+  mutate(
+    wage_diff = cosponsor_wage - primary_wage,
+    wage_diff_pct = (wage_diff / primary_wage) * 100,
+    total_employment = primary_employment + cosponsor_employment
+  ) |>
+  arrange(desc(wage_diff_pct))
+
+# If no sectors meet 2% threshold, lower it
+if(nrow(common_sectors) == 0) {
+  cat("No sectors with 2%+ share in both cities. Lowering threshold to 1%...\n\n")
+  
+  common_sectors <- primary_city_data |>
+    inner_join(cosponsor_city_data, by = "level2_title") |>
+    filter(primary_share >= 1, cosponsor_share >= 1) |>
+    mutate(
+      wage_diff = cosponsor_wage - primary_wage,
+      wage_diff_pct = (wage_diff / primary_wage) * 100,
+      total_employment = primary_employment + cosponsor_employment
+    ) |>
+    arrange(desc(wage_diff_pct))
+}
+
+# Select occupation groups for lobbying
+# Group 1: Highest wage premium in expensive city (shows cost burden)
+occupation_1 <- common_sectors |> slice(1)
+
+# Group 2: Largest combined employment base
+occupation_2 <- common_sectors |> 
+  arrange(desc(total_employment)) |>
+  slice(1)
+
+# If they're the same, pick second largest for variety
+if(occupation_1$level2_title == occupation_2$level2_title) {
+  occupation_2 <- common_sectors |> 
+    arrange(desc(total_employment)) |>
+    slice(2)
+}
+
+cat("==============================================\n")
+cat("KEY OCCUPATIONAL GROUPS FOR LOBBYING:\n")
+cat("==============================================\n\n")
+
+cat("Group 1:", occupation_1$level2_title, "\n")
+cat("  - Employment in", str_extract(primary_sponsor_city$NAME, "^[^,]+"), ":", 
+    format(occupation_1$primary_employment, big.mark=","), 
+    "(", round(occupation_1$primary_share, 1), "% of workforce)\n")
+cat("  - Employment in", str_extract(cosponsor_city$NAME, "^[^,]+"), ":", 
+    format(occupation_1$cosponsor_employment, big.mark=","),
+    "(", round(occupation_1$cosponsor_share, 1), "% of workforce)\n")
+cat("  - Average wage in", str_extract(primary_sponsor_city$NAME, "^[^,]+"), ":", 
+    scales::dollar(occupation_1$primary_wage), "\n")
+cat("  - Average wage in", str_extract(cosponsor_city$NAME, "^[^,]+"), ":", 
+    scales::dollar(occupation_1$cosponsor_wage), "\n")
+cat("  - Wage premium in expensive city:", round(occupation_1$wage_diff_pct, 1), "%\n")
+cat("  - LOBBYING ANGLE: Workers in this sector pay", 
+    scales::dollar(abs(occupation_1$wage_diff)), 
+    "more in the expensive city, despite similar work\n\n")
+
+cat("Group 2:", occupation_2$level2_title, "\n")
+cat("  - Combined employment:", format(occupation_2$total_employment, big.mark=","), "\n")
+cat("  - Employment in", str_extract(primary_sponsor_city$NAME, "^[^,]+"), ":", 
+    format(occupation_2$primary_employment, big.mark=","),
+    "(", round(occupation_2$primary_share, 1), "% of workforce)\n")
+cat("  - Employment in", str_extract(cosponsor_city$NAME, "^[^,]+"), ":", 
+    format(occupation_2$cosponsor_employment, big.mark=","),
+    "(", round(occupation_2$cosponsor_share, 1), "% of workforce)\n")
+cat("  - LOBBYING ANGLE: This sector represents", 
+    round(mean(c(occupation_2$primary_share, occupation_2$cosponsor_share)), 1),
+    "% of the workforce - a politically crucial constituency\n")
+```
+
+These occupational groups represent hundreds of thousands of voters in our sponsor cities, making them politically crucial constituencies.
+
+
+#Policy Brief: Federal YIMBY Incentive Program: Building Affordable Communities Through Housing Supply
+
+Based on our analysis, here is the policy brief for congressional sponsors:
+```{r}
+#| echo: false
+#| results: asis
+
+# Extract key statistics for the brief
+primary_name <- str_extract(primary_sponsor_city$NAME, "^[^,]+")
+cosponsor_name <- str_extract(cosponsor_city$NAME, "^[^,]+")
+
+# Safely extract occupation names
+occ1_name <- occupation_1$level2_title
+occ2_name <- occupation_2$level2_title  # Remove [1] indexing
+
+# Calculate employment totals directly
+occ1_total_employment <- occupation_1$primary_employment + occupation_1$cosponsor_employment
+occ2_total_employment <- occupation_2$primary_employment + occupation_2$cosponsor_employment
+occ2_avg_share <- mean(c(occupation_2$primary_share, occupation_2$cosponsor_share))
+
+primary_rent_improvement <- abs(round(primary_sponsor_city$rent_burden_change, 0))
+cosponsor_rent_burden <- round(cosponsor_city$final_rent_burden, 0)
+```
+
+---
+
+<div style="border: 2px solid #2C3E50; padding: 20px; margin: 20px 0; background-color: #f8f9fa;">
+
+<h2 style="text-align: center; color: #2C3E50; margin-top: 0;">FEDERAL YIMBY INCENTIVE PROGRAM</h2>
+<h3 style="text-align: center; color: #7F8C8D; margin-top: -10px;">Policy Brief for Congressional Sponsors</h3>
+
+<hr style="border: 1px solid #2C3E50;">
+
+### THE OPPORTUNITY
+
+Housing costs are crushing American families, but we have proof that pro-housing policies work. Cities that embrace YIMBY (Yes In My Back Yard) principles—permissive zoning, streamlined permitting, and abundant construction—have **improved affordability while growing their economies**. Federal incentives can replicate this success nationwide.
+
+### RECOMMENDED SPONSORS
+
+**Primary Sponsor: Representative from `r primary_name`**  
+This metro exemplifies YIMBY success: despite strong population growth (+`r round(primary_sponsor_city$pop_growth_pct, 0)`%), aggressive housing construction has **reduced rent burden by `r primary_rent_improvement` points** since 2014. Your constituents benefit from both economic growth and improving affordability—a powerful validation of pro-housing policies.
+
+**Co-Sponsor: Representative from `r cosponsor_name`**  
+This metro faces a severe affordability crisis: rent burden stands at **`r cosponsor_rent_burden`** (vs. 100 national baseline), among the highest in the nation. Despite population growth, restrictive housing policies have worsened affordability. Your constituents desperately need federal incentives to overcome local NIMBY opposition.
+
+### KEY CONSTITUENCIES
+
+**`r occ1_name` Workers** (`(`r format(occ1_total_employment, big.mark=",")` employees combined)
+In high-rent cities, these workers face housing costs `r round(occupation_1$wage_diff_pct, 0)`% higher than in pro-housing metros. Reducing rent burden puts money directly in their pockets—equivalent to a substantial raise without any employer cost.
+
+**`r occ2_name` Sector** (`r format(occ2_total_employment, big.mark=",")` employees, `r round(occ2_avg_share, 1)`% of workforce)
+
+### PROGRAM METRICS
+
+**Rent Burden Index**  
+Measures housing affordability by comparing median rent to median household income, normalized to national baseline (100 = 2009 average). Higher scores indicate greater rent burden. Cities showing declining burden despite growth demonstrate YIMBY success.
+
+**Housing Growth Index**  
+Composite score evaluating: (1) per-capita construction rates, and (2) whether housing supply growth exceeds population growth. Scores above 100 indicate pro-housing policies; top performers build enough to reduce housing scarcity even as populations expand.
+
+**Funding Formula:** Prioritize metros that demonstrate both (a) current affordability challenges (rent burden > 105) and (b) commitment to supply-side solutions (housing growth > 100), or reward metros maintaining affordability through sustained construction.
+
+### THE ASK
+
+Establish competitive federal grants ($500M annually) for municipalities that:
+- Streamline permitting (< 6 months for multifamily projects)
+- Eliminate single-family-only zoning
+- Reduce parking requirements
+- Increase allowed density near transit
+
+Cities meeting benchmarks receive infrastructure funding, housing vouchers, and planning grants. Metros achieving affordability improvements qualify for bonus funding.
+
+### WHY THIS WORKS
+
+We have proof: `r primary_name` and similar metros show that YIMBY policies improve affordability without sacrificing growth. The alternative—restrictive policies in `r cosponsor_name` and elsewhere—creates housing crises that hurt working families and constrain economic opportunity.
+
+**Your constituents win either way:** Pro-housing metros receive recognition and continued support; struggling metros gain tools and incentives to overcome NIMBY opposition.
+
+<hr style="border: 1px solid #2C3E50; margin-top: 20px;">
+
+<p style="text-align: center; color: #7F8C8D; font-size: 0.9em; margin-bottom: 0;">
+For detailed analysis and supporting data, contact [Your Organization]<br>
+Based on US Census Bureau data (2009-2023) covering `r n_distinct(yimby_analysis$GEOID)` metropolitan areas
+</p>
+
+</div>
+---
 
 
 
 
-
-
-Code related to Exploratory Data Analysis goes here. This may include
-exploratory graphics, instructor-provided exploratory questions, or other
-similar elements. 
-
-## Final Insights and Deliverable
-
-Code related to the final deliverable of the assignment goes here. 
 
 
 
