@@ -1,0 +1,533 @@
+---
+title: "Mini-Project 02 - Making Backyards Affordable for All"
+author: "Caroline Guirand"
+editor:
+    mode: source
+format:
+    html:
+        code-fold: true
+
+---
+
+## Introduction
+
+A suitable introduction goes here. In this mini-project, I intend to demonstrate
+my skills at Data Integration/Data Visualization/Metric Creation in an analysis of Official Statistics/Economic Data/Census Data data.
+
+## Data Acquisition and Preparation
+
+```{r}
+# Task 1: Data Import
+# ===================
+# In this section, we download and prepare census data from the American Community
+# Survey (ACS) covering multiple years. We focus on four key metrics that will help
+# us understand housing affordability across US metro areas.
+
+# First, we set up our data directory structure
+if(!dir.exists(file.path("data", "mp02"))){
+  dir.create(file.path("data", "mp02"), showWarnings=FALSE, recursive=TRUE)
+}
+
+# Override the library() function to auto-install packages if needed
+# This ensures reproducibility across different environments
+library <- function(pkg){
+  pkg <- as.character(substitute(pkg))
+  options(repos = c(CRAN = "https://cloud.r-project.org"))
+  if(!require(pkg, character.only=TRUE, quietly=TRUE)) install.packages(pkg)
+  stopifnot(require(pkg, character.only=TRUE, quietly=TRUE))
+}
+
+# Load required packages
+library(tidyverse)   # For data manipulation and visualization
+library(glue)        # For string interpolation
+library(readxl)      # For reading Excel files
+library(tidycensus)  # For accessing US Census Bureau data
+library(httr2)       # For making HTTP requests to BLS
+library(rvest)       # For web scraping BLS data
+
+# Define helper function to download ACS data across multiple years
+# This function handles caching to avoid repeated API calls
+get_acs_all_years <- function(variable, geography="cbsa",
+                               start_year=2009, end_year=2023){
+  # Create file name for cached data
+  fname <- glue("{variable}_{geography}_{start_year}_{end_year}.csv")
+  fname <- file.path("data", "mp02", fname)
+  
+  # Only download if we don't already have the data cached
+  if(!file.exists(fname)){
+    YEARS <- seq(start_year, end_year)
+    YEARS <- YEARS[YEARS != 2020] # Drop 2020 - No ACS 1-year survey (COVID-19)
+    
+    # Download data for each year and combine
+    ALL_DATA <- map(YEARS, function(yy){
+      tidycensus::get_acs(geography, variable, year=yy, survey="acs1") |>
+        mutate(year=yy) |>
+        select(-moe, -variable) |>  # Remove margin of error and variable name
+        rename(!!variable := estimate)
+    }) |> bind_rows()
+    
+    # Cache the results
+    write_csv(ALL_DATA, fname)
+  }
+  
+  # Read and return the data
+  read_csv(fname, show_col_types=FALSE)
+}
+
+# Download four key data sets for Core Based Statistical Areas (CBSAs/metro areas)
+# KEY OBSERVATION: All data sets share common keys: GEOID, NAME, and year
+# These will be used to join the data sets together
+
+# 1. Median household income (in 12-month inflation-adjusted dollars)
+INCOME <- get_acs_all_years("B19013_001") |>
+  rename(household_income = B19013_001)
+
+# 2. Median gross rent (monthly, in dollars)
+RENT <- get_acs_all_years("B25064_001") |>
+  rename(monthly_rent = B25064_001)
+
+# 3. Total population
+POPULATION <- get_acs_all_years("B01003_001") |>
+  rename(population = B01003_001)
+
+# 4. Total number of households
+HOUSEHOLDS <- get_acs_all_years("B11001_001") |>
+  rename(households = B11001_001)
+```
+
+
+```{r}
+# Download Building Permits Data
+# ================================
+# The number of new housing units permitted is not available via tidycensus,
+# so we're downloading it directly from Census Bureau construction data.
+# Note: Historical data (2009-2018) and current data (2019+) use different formats.
+
+get_building_permits <- function(start_year = 2009, end_year = 2023){
+  fname <- glue("housing_units_{start_year}_{end_year}.csv")
+  fname <- file.path("data", "mp02", fname)
+  
+  if(!file.exists(fname)){
+    # Process historical data (2009-2018): Fixed-width text format
+    HISTORICAL_YEARS <- seq(start_year, 2018)
+    
+    HISTORICAL_DATA <- map(HISTORICAL_YEARS, function(yy){
+      historical_url <- glue("https://www.census.gov/construction/bps/txt/tb3u{yy}.txt")
+      
+      # Read and parse fixed-width text file
+      LINES <- readLines(historical_url)[-c(1:11)]  # Skip header lines
+      
+      # Extract CBSA codes (columns 5-10)
+      CBSA_LINES <- str_detect(LINES, "^[[:digit:]]")
+      CBSA <- as.integer(str_sub(LINES[CBSA_LINES], 5, 10))
+      
+      # Extract permit counts (columns 48-53)
+      PERMIT_LINES <- str_detect(str_sub(LINES, 48, 53), "[[:digit:]]")
+      PERMITS <- as.integer(str_sub(LINES[PERMIT_LINES], 48, 53))
+      
+      data_frame(CBSA = CBSA,
+                 new_housing_units_permitted = PERMITS, 
+                 year = yy)
+    }) |> bind_rows()
+    
+    # Process current data (2019-2023): Excel format
+    CURRENT_YEARS <- seq(2019, end_year)
+    
+    CURRENT_DATA <- map(CURRENT_YEARS, function(yy){
+      current_url <- glue("https://www.census.gov/construction/bps/xls/msaannual_{yy}99.xls")
+      
+      temp <- tempfile()
+      download.file(current_url, destfile = temp, mode="wb")
+      
+      # Try xlsx format first, fall back to xls if needed
+      fallback <- function(.f1, .f2){
+        function(...){
+          tryCatch(.f1(...), 
+                   error=function(e) .f2(...))
+        }
+      }
+      
+      reader <- fallback(read_xlsx, read_xls)
+      
+      reader(temp, skip=5) |>
+        na.omit() |>
+        select(CBSA, Total) |>
+        mutate(year = yy) |>
+        rename(new_housing_units_permitted = Total)
+    }) |> bind_rows()
+    
+    # Combine historical and current data
+    ALL_DATA <- rbind(HISTORICAL_DATA, CURRENT_DATA)
+    
+    # Cache the results
+    write_csv(ALL_DATA, fname)
+  }
+  
+  # Read and return the data
+  read_csv(fname, show_col_types=FALSE)
+}
+
+# Download the permits data
+# Note: CBSA is stored as a numeric code, unlike GEOID in census data
+PERMITS <- get_building_permits()
+```
+
+```{r}
+# Download BLS Industry Classification Codes (NAICS)
+# ===================================================
+# The Bureau of Labor Statistics uses the North American Industry Classification
+# System (NAICS) to categorize industries. We need this lookup table to 
+# understand which industries are represented in the wage data.
+
+get_bls_industry_codes <- function(){
+  fname <- file.path("data", "mp02", "bls_industry_codes.csv")
+  
+  if(!file.exists(fname)){
+    # Download NAICS codes from BLS website
+    resp <- request("https://www.bls.gov") |> 
+      req_url_path("cew", "classifications", "industry", "industry-titles.htm") |>
+      req_headers(`User-Agent` = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0") |> 
+      req_error(is_error = \(resp) FALSE) |>
+      req_perform()
+    
+    resp_check_status(resp)
+    
+    # Parse the HTML table containing NAICS codes
+    naics_table <- resp_body_html(resp) |>
+      html_element("#naics_titles") |> 
+      html_table() |>
+      mutate(title = str_trim(str_remove(str_remove(`Industry Title`, Code), "NAICS"))) |>
+      select(Code, `Industry Title`) |>
+      rename(title = `Industry Title`) |>
+      mutate(depth = if_else(nchar(Code) <= 5, nchar(Code) - 1, NA)) |>
+      filter(!is.na(depth))
+    
+    # Manually add codes that were presented as ranges on the website
+    # (There are only three, so manual handling is easier than special-casing)
+    naics_missing <- tibble::tribble(
+      ~Code, ~title, ~depth, 
+      "31", "Manufacturing", 1,
+      "32", "Manufacturing", 1,
+      "33", "Manufacturing", 1,
+      "44", "Retail", 1, 
+      "45", "Retail", 1,
+      "48", "Transportation and Warehousing", 1, 
+      "49", "Transportation and Warehousing", 1
+    )
+    
+    naics_table <- bind_rows(naics_table, naics_missing)
+    
+    # Create hierarchical structure: each industry has 4 levels of detail
+    # Level 1 = broad (e.g., "Manufacturing")
+    # Level 4 = specific (e.g., "Semiconductor Manufacturing")
+    naics_table <- naics_table |> 
+      filter(depth == 4) |>  # Focus on most detailed level
+      rename(level4_title=title) |> 
+      mutate(level1_code = str_sub(Code, end=2), 
+             level2_code = str_sub(Code, end=3), 
+             level3_code = str_sub(Code, end=4)) |>
+      left_join(naics_table, join_by(level1_code == Code)) |>
+      rename(level1_title=title) |>
+      left_join(naics_table, join_by(level2_code == Code)) |>
+      rename(level2_title=title) |>
+      left_join(naics_table, join_by(level3_code == Code)) |>
+      rename(level3_title=title) |>
+      select(-starts_with("depth")) |>
+      rename(level4_code = Code) |>
+      select(level1_title, level2_title, level3_title, level4_title, 
+             level1_code,  level2_code,  level3_code,  level4_code) |>
+      drop_na() |>
+      mutate(across(contains("code"), as.integer))
+    
+    # Cache the results
+    write_csv(naics_table, fname)
+  }
+  
+  # Read and return the data
+  read_csv(fname, show_col_types=FALSE)
+}
+
+# Download industry codes lookup table
+INDUSTRY_CODES <- get_bls_industry_codes()
+
+```
+
+```{r}
+
+# Download BLS Quarterly Census of Employment and Wages (QCEW)
+# =============================================================
+# The QCEW provides detailed employment and wage data by industry and geography.
+# We use the annual averages to understand labor market conditions across CBSAs.
+
+get_bls_qcew_annual_averages <- function(start_year=2009, end_year=2023){
+  fname <- glue("bls_qcew_{start_year}_{end_year}.csv.gz")
+  fname <- file.path("data", "mp02", fname)
+  
+  YEARS <- seq(start_year, end_year)
+  YEARS <- YEARS[YEARS != 2020] # Drop 2020 to match ACS (COVID year)
+  
+  if(!file.exists(fname)){
+    # Download and process data for each year
+    ALL_DATA <- map(YEARS, .progress=TRUE, possibly(function(yy){
+      fname_inner <- file.path("data", "mp02", glue("{yy}_qcew_annual_singlefile.zip"))
+      
+      # Download annual file if not already cached
+      if(!file.exists(fname_inner)){
+        request("https://www.bls.gov") |> 
+          req_url_path("cew", "data", "files", yy, "csv",
+                       glue("{yy}_annual_singlefile.zip")) |>
+          req_headers(`User-Agent` = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:143.0) Gecko/20100101 Firefox/143.0") |> 
+          req_retry(max_tries=5) |>
+          req_perform(fname_inner)
+      }
+      
+      # Verify file downloaded correctly (should be ~75MB)
+      if(file.info(fname_inner)$size < 755e5){
+        warning(sQuote(fname_inner), " appears corrupted. Please delete and retry this step.")
+      }
+      
+      # Read and filter the data
+      read_csv(fname_inner, show_col_types=FALSE) |> 
+        mutate(YEAR = yy) |>
+        select(area_fips,           # Geographic identifier
+               industry_code,        # NAICS industry code
+               annual_avg_emplvl,    # Average employment level
+               total_annual_wages,   # Total wages paid
+               YEAR) |>
+        # Filter to CBSAs only (FIPS starting with 'C') and valid industry codes
+        filter(nchar(industry_code) <= 5,           # Keep only detailed industries
+               str_starts(area_fips, "C")) |>       # Keep only CBSAs
+        filter(str_detect(industry_code, "-", negate=TRUE)) |>  # Remove ranges
+        # Rename for clarity
+        mutate(FIPS = area_fips, 
+               INDUSTRY = as.integer(industry_code), 
+               EMPLOYMENT = as.integer(annual_avg_emplvl), 
+               TOTAL_WAGES = total_annual_wages) |>
+        select(-area_fips, -industry_code, -annual_avg_emplvl, -total_annual_wages) |>
+        # Remove "all industries" aggregate (code 10)
+        filter(INDUSTRY != 10) |> 
+        # Calculate average wage per employee
+        mutate(AVG_WAGE = TOTAL_WAGES / EMPLOYMENT)
+    })) |> bind_rows()
+    
+    # Cache the combined results (compressed to save space)
+    write_csv(ALL_DATA, fname)
+  }
+  
+  # Read the cached data
+  ALL_DATA <- read_csv(fname, show_col_types=FALSE)
+  
+  # Verify all years downloaded successfully
+  ALL_DATA_YEARS <- unique(ALL_DATA$YEAR)
+  YEARS_DIFF <- setdiff(YEARS, ALL_DATA_YEARS)
+  
+  if(length(YEARS_DIFF) > 0){
+    stop("Download failed for the following years: ", YEARS_DIFF, 
+         ". Please delete intermediate files and try again.")
+  }
+  
+  ALL_DATA
+}
+
+# Download wage data
+WAGES <- get_bls_qcew_annual_averages()
+```
+
+
+### Examining Dataset Structure and Identifying Join Keys
+Now that we have downloaded all necessary datasets, we need to examine their structure
+to identify the appropriate keys for joining them together in our analysis.
+
+```{r}
+# Examine Census Data Structure
+cat("=", rep("=", 69), "\n", sep="")
+cat("CENSUS DATA (from tidycensus - ACS)\n")
+cat("=", rep("=", 69), "\n\n", sep="")
+
+glimpse(INCOME)
+```
+
+The American Community Survey (ACS) provides four key data sets for our analysis. The **INCOME** data set contains `r nrow(INCOME)` observations across `r n_distinct(INCOME$GEOID)` unique Core Based Statistical Areas (CBSAs). These metro areas are tracked over `r n_distinct(INCOME$year)` years, specifically: `r paste(sort(unique(INCOME$year)), collapse=", ")`. Note that 2020 is excluded because the Census Bureau did not conduct the 1-year ACS survey that year due to the COVID-19 pandemic.
+
+All four census data sets (INCOME, RENT, POPULATION, and HOUSEHOLDS) share the same structure with three common keys: **GEOID** (numeric CBSA identifier), **NAME** (metro area name), and **year** (survey year). These datasets can be joined directly to each other using `GEOID` and `year` as composite keys.
+
+```{r}
+# Examine Building Permits Data Structure
+cat("=", rep("=", 69), "\n", sep="")
+cat("BUILDING PERMITS DATA\n")
+cat("=", rep("=", 69), "\n\n", sep="")
+
+glimpse(PERMITS)
+```
+
+The **PERMITS** data set tracks new housing construction permits across `r n_distinct(PERMITS$CBSA)` CBSAs over `r n_distinct(PERMITS$year)` years (`r min(PERMITS$year)`-`r max(PERMITS$year)`). Unlike the census data, this data set includes 2020 data. The PERMITS data set uses `CBSA` as a numeric code, matching the format of `GEOID` in the census data, so we can join them directly: `GEOID == CBSA`.
+
+```{r}
+# Examine Industry Classification Data
+cat("=", rep("=", 69), "\n", sep="")
+cat("BLS INDUSTRY CODES (NAICS Classification)\n")
+cat("=", rep("=", 69), "\n\n", sep="")
+
+glimpse(INDUSTRY_CODES)
+head(INDUSTRY_CODES %>% select(level1_title, level4_title, level4_code), 3)
+```
+
+The **INDUSTRY_CODES** data set is a lookup table containing `r nrow(INDUSTRY_CODES)` detailed industry classifications following the North American Industry Classification System (NAICS). This hierarchical system has four levels, from broad sectors (level 1) to specific industries (level 4). For example, level 1 includes broad categories like "`r INDUSTRY_CODES$level1_title[1]`" while level 4 provides specific industries like "`r INDUSTRY_CODES$level4_title[1]`". This table will be essential for understanding the wage data by industry type, joining on `level4_code == INDUSTRY`.
+
+```{r}
+# Examine BLS Wage Data Structure
+cat("=", rep("=", 69), "\n", sep="")
+cat("BLS QCEW WAGE DATA\n")
+cat("=", rep("=", 69), "\n\n", sep="")
+
+glimpse(WAGES)
+cat("\nSample FIPS codes:", head(unique(WAGES$FIPS), 5), "\n")
+```
+
+The **WAGES** data set from the BLS Quarterly Census of Employment and Wages is our largest data set with `r format(nrow(WAGES), big.mark=",")` observations. It tracks employment and wages across `r n_distinct(WAGES$FIPS)` geographic areas, `r n_distinct(WAGES$INDUSTRY)` industries, and `r n_distinct(WAGES$YEAR)` years. 
+
+The joining strategy here is more complex because the `FIPS` column stores CBSA codes with a "C" prefix (e.g., "C10180"). To join with census data, we need to extract the numeric portion: `as.numeric(substr(FIPS, 2, 6))`. Additionally, the year column is named `YEAR` (uppercase) rather than `year` (lowercase), so we'll need to account for this when joining.
+
+```{r}
+# Create summary table of all data sets
+data_summary <- tibble(
+  Dataset = c("INCOME/RENT/POPULATION/HOUSEHOLDS", "PERMITS", "WAGES", "INDUSTRY_CODES"),
+  Observations = c(format(nrow(INCOME), big.mark=","), 
+                   format(nrow(PERMITS), big.mark=","), 
+                   format(nrow(WAGES), big.mark=","), 
+                   format(nrow(INDUSTRY_CODES), big.mark=",")),
+  Geographic_Units = c(n_distinct(INCOME$GEOID), 
+                       n_distinct(PERMITS$CBSA), 
+                       n_distinct(WAGES$FIPS), 
+                       "N/A (Lookup Table)"),
+  Time_Periods = c(n_distinct(INCOME$year), 
+                   n_distinct(PERMITS$year), 
+                   n_distinct(WAGES$YEAR), 
+                   "N/A"),
+  Primary_Keys = c("GEOID + year", 
+                   "CBSA + year", 
+                   "FIPS + YEAR + INDUSTRY", 
+                   "level4_code")
+)
+
+knitr::kable(data_summary, 
+             caption = "Summary of All Datasets",
+             align = c('l', 'r', 'r', 'r', 'l'))
+```
+
+**Summary of Joining Strategy:**
+
+1. **Census data sets** (INCOME, RENT, POPULATION, HOUSEHOLDS) can be joined directly on `GEOID` and `year`
+2. **PERMITS** joins to census data where `GEOID == CBSA` and `year` matches  
+3. **WAGES** requires extracting numeric CBSA from `FIPS` column, then joining on the converted value and matching year
+4. **INDUSTRY_CODES** joins to WAGES where `INDUSTRY == level4_code` to add readable industry names
+
+Now we can continue to combine these data sets for our YIMBY analysis. 
+
+### Entity Relationship Diagram (ERD)
+To better understand the relationships between these data sets, I've created an Entity Relationship Diagram (ERD) using the DiagrammeR package. This shows the structure of each table and their relationships.
+
+```{r}
+# Install and load DiagrammeR package for creating the ERD
+if(!require(DiagrammeR, quietly = TRUE)) {
+  install.packages("DiagrammeR")
+}
+library(DiagrammeR)
+```
+
+```{r}
+#| label: fig-erd-r
+#| fig-cap: "Entity Relationship Diagram created with DiagrammeR"
+#| fig-width: 12
+#| fig-height: 10
+
+library(DiagrammeR)
+
+grViz("
+digraph ERD {
+  graph [rankdir=LR, fontname=Helvetica, bgcolor=white]
+  node [shape=rectangle, style=filled, fontname=Helvetica, fontsize=10, margin=0.2]
+  edge [fontname=Helvetica, fontsize=8]
+  
+  # Census datasets
+  INCOME [label='INCOME\n━━━━━━\nGEOID (PK)\nNAME\nyear (PK)\n━━━━━━\nhousehold_income', fillcolor='#E8F4F8']
+  RENT [label='RENT\n━━━━━━\nGEOID (PK)\nNAME\nyear (PK)\n━━━━━━\nmonthly_rent', fillcolor='#E8F4F8']
+  POPULATION [label='POPULATION\n━━━━━━\nGEOID (PK)\nNAME\nyear (PK)\n━━━━━━\npopulation', fillcolor='#E8F4F8']
+  HOUSEHOLDS [label='HOUSEHOLDS\n━━━━━━\nGEOID (PK)\nNAME\nyear (PK)\n━━━━━━\nhouseholds', fillcolor='#E8F4F8']
+  
+  # Other datasets
+  PERMITS [label='PERMITS\n━━━━━━\nCBSA (PK)\nyear (PK)\n━━━━━━\nnew_housing_units', fillcolor='#FFF4E6']
+  WAGES [label='WAGES\n━━━━━━\nFIPS (PK)\nYEAR (PK)\nINDUSTRY (PK)\n━━━━━━\nEMPLOYMENT\nTOTAL_WAGES\nAVG_WAGE', fillcolor='#F0E6FF']
+  INDUSTRY_CODES [label='INDUSTRY_CODES\n━━━━━━\nlevel4_code (PK)\n━━━━━━\nlevel1-4_title\nlevel1-4_code', fillcolor='#E6F7E6']
+  
+  # Relationships
+  INCOME -> RENT [label='GEOID+year', color='#0066CC', penwidth=2]
+  INCOME -> POPULATION [label='GEOID+year', color='#0066CC', penwidth=2]
+  INCOME -> HOUSEHOLDS [label='GEOID+year', color='#0066CC', penwidth=2]
+  INCOME -> PERMITS [label='GEOID=CBSA\n+year', color='#FF9900', style=dashed, penwidth=2]
+  INCOME -> WAGES [label='GEOID=\nsubstr(FIPS,2)\n+year=YEAR', color='#9933FF', style=dashed, penwidth=2]
+  WAGES -> INDUSTRY_CODES [label='INDUSTRY=\nlevel4_code', color='#009900', penwidth=2]
+}
+")
+```
+
+**Key Insights from the ERD:**
+
+The diagram reveals three distinct relationship patterns in our data:
+
+1. **Direct Relationships (Census Data)**: The four ACS data sets (INCOME, RENT, POPULATION, HOUSEHOLDS) share identical structures with `r n_distinct(INCOME$GEOID)` CBSAs tracked over `r n_distinct(INCOME$year)` years. They can be joined directly using composite keys (`GEOID` + `year`), making them straightforward to combine.
+
+2. **Simple Type Conversion (PERMITS)**: The building permits data uses `CBSA` as a numeric identifier, which directly matches the `GEOID` in census data. This allows for a direct join: `GEOID == CBSA`, though we must be mindful that PERMITS includes 2020 data while census data does not.
+
+3. **Complex String Manipulation (WAGES)**: The wage data presents the most complex joining challenge. The `FIPS` column stores CBSA codes with a "C" prefix (e.g., "C10180" for Abilene, TX), requiring string extraction via `as.numeric(substr(FIPS, 2, 6))` to match with census `GEOID` values. Additionally, the year column is uppercase (`YEAR` vs `year`), necessitating careful attention during joins.
+
+4. **Lookup Table Enhancement (INDUSTRY_CODES)**: The NAICS industry classification table serves as a hierarchical lookup, allowing us to enrich the wage data with human-readable industry names and broader sector classifications through the `INDUSTRY == level4_code` relationship.
+
+This relationship structure will guide our data integration strategy in the following sections, where we'll progressively build a comprehensive data set combining housing affordability metrics, construction activity, and labor market conditions across US metropolitan areas.
+
+
+
+
+
+
+
+Code related to Data Acquisition and Preparation goes here.
+
+
+
+
+Remember that code blocks look like this: 
+
+```{r}
+# Your code goes in chunks like this
+library(tidyverse) # You will want this line for almost all MPs
+x <- 1 + 2 + 3
+```
+
+and you can then print variables from chunks: 
+
+```{r}
+x
+```
+
+or inline, like this: $x$ is `r x`.
+
+## Exploratory Analysis
+
+Code related to Exploratory Data Analysis goes here. This may include
+exploratory graphics, instructor-provided exploratory questions, or other
+similar elements. 
+
+## Final Insights and Deliverable
+
+Code related to the final deliverable of the assignment goes here. 
+
+
+
+------------------------------------------------------------------------
+
+This work ©2025 by cguirand27 was initially prepared as a Mini-Project for
+STA 9750 at Baruch College. More details about this course can be found at
+[the course site](https://michael-weylandt.com/STA9750) and instructions for
+this assignment can be found at 
+[MP #02](https://michael-weylandt.com/STA9750/miniprojects/mini02.html)
