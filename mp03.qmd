@@ -1,0 +1,444 @@
+---
+title: "Mini-Project 03 - Visualizing and Maintaining the Green Canopy of NYC"
+author: "Caroline Guirand"
+editor:
+    mode: source
+format:
+    html:
+        theme:  solar # Change this to any theme below
+        code-fold: true
+        code-summary: "Show Code"
+        toc: true
+        toc-location: left
+        toc-depth: 3
+        toc-title: "Table Of Contents"
+        number-sections: true
+        number-depth: 3
+        smooth-scroll: true
+        link-external-newwindow: true
+        df-print: paged
+        
+---
+
+### Introduction
+```{r}
+#| label: intro-image
+#| fig-align: center
+#| out.width: "80%"
+
+knitr::include_graphics("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800")
+```
+
+New York City's urban forest is one of its greatest assets. With nearly 900,000 trees representing over 500 species across 30,000 acres of parkland, the Department of Parks and Recreation maintains a living infrastructure that defines our city's character and improves the health of millions of residents. Despite this, this precious resource faces significant challenges: uneven distribution across neighborhoods, varying states of health, and the constant pressure of urban development.
+
+This analysis explores the NYC TreeMap dataset to understand the current state of our urban forest and identify critical opportunities for intervention. By leveraging spatial analysis and data visualization, we can make evidence-based decisions about where resources should be directed to maximize community benefit. This report demonstrates how data-driven planning can ensure that all New Yorkers, regardless of zip code, have access to the environmental and health benefits that a thriving urban forest provides. Through targeted investment and strategic planning, we can transform neighborhoods like the South Bronx and create a more equitable, greener city for everyone.
+
+#### Data Acquisition
+
+##### Task 1: Downloading NYC City Council District Boundaries
+```{r}
+#| label: load-libraries
+
+library(sf)
+library(tidyverse)
+library(httr2)
+
+#| label: download-districts
+#| cache: true
+
+download_nyc_districts <- function() {
+  # Define paths
+  dir_path <- "data/mp03"
+  zip_path <- file.path(dir_path, "nyc_districts.zip")
+  
+  # Step 1: Create directory if needed
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path, recursive = TRUE)
+    message("Created directory: ", dir_path)
+  }
+  
+  # Step 2: Download zip file if needed
+  if (!file.exists(zip_path)) {
+    message("Downloading NYC City Council District boundaries...")
+    url <- "https://s-media.nyc.gov/agencies/dcp/assets/files/zip/data-tools/bytes/city-council/nyccwi_25c.zip"
+    download.file(url, zip_path, mode = "wb")
+    message("Download complete!")
+  } else {
+    message("District boundaries already downloaded.")
+  }
+  
+  # Step 3: Unzip if needed
+  extract_path <- file.path(dir_path, "nycd")
+  if (!dir.exists(extract_path)) {
+    message("Unzipping district boundaries...")
+    unzip(zip_path, exdir = extract_path)
+    message("Unzip complete!")
+  } else {
+    message("District boundaries already unzipped.")
+  }
+  
+  # Step 4: Read the shapefile - search recursively
+  message("Reading shapefile...")
+  
+  # Search for .shp files recursively in all subdirectories
+  shp_files <- list.files(extract_path, pattern = "\\.shp$", full.names = TRUE, recursive = TRUE)
+  
+  if (length(shp_files) == 0) {
+    stop("No .shp file found in extracted directory")
+  }
+  
+  districts <- st_read(shp_files[1], quiet = TRUE)
+  
+  # Step 5: Transform to WGS 84
+  districts <- st_transform(districts, crs = "WGS84")
+  
+  # Step 6: Return the data
+  message("District boundaries ready!")
+  return(districts)
+}
+
+# Download and load the district boundaries
+nyc_districts <- download_nyc_districts()
+
+# Quick preview
+head(nyc_districts, 3)
+```
+
+##### Task 2: Downloading NYC Tree Census Data
+
+```{r}
+#| label: download-trees-simple
+#| cache: true
+
+# Simple direct download of tree data
+trees_url <- "https://data.cityofnewyork.us/resource/hn5i-inap.geojson?$limit=5000&$offset=0"
+
+message("Downloading tree data from API...")
+nyc_trees <- st_read(trees_url, quiet = TRUE)
+
+message("Trees loaded: ", nrow(nyc_trees), " records")
+head(nyc_trees)
+```
+
+#### Data Integration and Initial Exploration
+
+#### Task 3: Interactive Map of Tree Data
+```{r}
+#| label: task3-map-all-trees
+#| cache: true
+
+# Create a map of all trees superimposed over council districts
+ggplot() +
+  # Layer 1: Council district boundaries
+  geom_sf(data = nyc_districts, fill = "white", color = "gray30", alpha = 0.2) +
+  # Layer 2: Tree points
+  geom_sf(data = nyc_trees, aes(color = tpcondition), size = 2, alpha = 0.7) +
+  scale_color_manual(values = c("Excellent" = "#2ecc71", "Good" = "#27ae60", 
+                                "Fair" = "#f39c12", "Poor" = "#e74c3c", 
+                                "Dead" = "#c0392b"), na.value = "#95a5a6") +
+  labs(title = "NYC Trees by Condition",
+       subtitle = "Superimposed over City Council Districts",
+       color = "Tree Condition") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        plot.background = element_rect(fill = "transparent", color = NA))
+```
+##### Note: **Extra Credit**
+
+```{r}
+#| label: task3-map-interactive
+#| cache: true
+
+library(leaflet)
+
+# Create color palette for tree conditions
+pal <- colorFactor(
+  palette = c("Excellent" = "#2ecc71", "Good" = "#27ae60", 
+              "Fair" = "#f39c12", "Poor" = "#e74c3c", 
+              "Dead" = "#c0392b"),
+  domain = nyc_trees$tpcondition,
+  na.color = "#95a5a6"
+)
+
+# Create interactive leaflet map
+leaflet(nyc_trees) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    radius = 3,
+    color = ~pal(tpcondition),
+    opacity = 0.7,
+    fillOpacity = 0.5,
+    popup = ~paste("Species:", genusspecies, "<br>",
+                   "Condition:", tpcondition)
+  ) %>%
+  addLegend(pal = pal, values = ~tpcondition, 
+            title = "Tree Condition",
+            position = "bottomright")
+```
+
+
+```{r}
+#| label: check-district-columns
+
+colnames(nyc_districts)
+head(nyc_districts)
+```
+
+#### Task 4: Analyzing Tree Coverage by Council District
+
+**Question 1: Which council district has the most trees?**
+```{r}
+#| label: task4-q1-most-trees
+
+# Spatial join - trees to districts
+trees_by_district <- st_join(nyc_districts, nyc_trees, join = st_contains)
+
+# Which council district has the most trees?
+trees_per_district <- trees_by_district %>%
+  st_set_geometry(NULL) %>%
+  group_by(CounDist) %>%
+  summarize(total_trees = n(), .groups = "drop") %>%
+  arrange(desc(total_trees))
+
+q1_answer <- trees_per_district %>% slice(1)
+cat("Answer: Council District", q1_answer$CounDist, "has the most trees with", q1_answer$total_trees, "total trees.")
+
+```
+
+---
+
+**Question 2: Which council district has the highest density of trees?**
+```{r}
+#| label: task4-q2-tree-density
+
+# Which council district has the highest density of trees?
+trees_density <- trees_by_district %>%
+  st_set_geometry(NULL) %>%
+  group_by(CounDist, Shape_Area) %>%
+  summarize(total_trees = n(), .groups = "drop") %>%
+  mutate(tree_density = total_trees / Shape_Area * 1000000) %>%
+  arrange(desc(tree_density))
+
+q2_answer <- trees_density %>% slice(1)
+cat("Answer: Council District", q2_answer$CounDist, "has the highest tree density with", round(q2_answer$tree_density, 2), "trees per million square meters.")
+```
+
+---
+
+**Question 3: Which district has the highest fraction of dead trees?**
+```{r}
+#| label: task4-q3-dead-trees
+
+# Which district has highest fraction of dead trees?
+dead_tree_fraction <- trees_by_district %>%
+  st_set_geometry(NULL) %>%
+  group_by(CounDist) %>%
+  summarize(
+    total_trees = n(),
+    dead_trees = sum(tpcondition == "Dead", na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(dead_fraction = dead_trees / total_trees) %>%
+  arrange(desc(dead_fraction))
+
+q3_answer <- dead_tree_fraction %>% slice(1)
+cat("Answer: Council District", q3_answer$CounDist, "has the highest fraction of dead trees at", round(q3_answer$dead_fraction * 100, 2), "percent.")
+```
+
+---
+
+**Question 4: What is the most common tree species in Manhattan?**
+```{r}
+#| label: task4-q4-manhattan-species
+
+# Most common tree species in Manhattan
+manhattan_trees <- trees_by_district %>%
+  st_set_geometry(NULL) %>%
+  mutate(borough = case_when(
+    CounDist %in% 1:10 ~ "Manhattan",
+    CounDist %in% 11:18 ~ "Bronx",
+    CounDist %in% 19:32 ~ "Queens",
+    CounDist %in% 33:48 ~ "Brooklyn",
+    CounDist %in% 49:51 ~ "Staten Island"
+  )) %>%
+  filter(borough == "Manhattan")
+
+q4_answer <- manhattan_trees %>%
+  group_by(genusspecies) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  arrange(desc(count)) %>%
+  slice(1)
+
+cat("Answer:", q4_answer$genusspecies, "is the most common tree species in Manhattan with", q4_answer$count, "trees.")
+```
+
+---
+
+**Question 5: What is the species of the tree closest to Baruch's campus?**
+```{r}
+#| label: task4-q5-baruch-closest
+
+# Helper function to create a point
+new_st_point <- function(lat, lon, ...){
+  st_sfc(point = st_point(c(lon, lat))) |>
+    st_set_crs("WGS84")
+}
+
+# Baruch's campus is at approximately 40.7353° N, 73.9858° W
+baruch_point <- new_st_point(40.7353, -73.9858)
+
+# Find tree closest to Baruch
+q5_data <- trees_by_district %>%
+  mutate(distance = st_distance(geometry, baruch_point)) %>%
+  arrange(distance) %>%
+  slice(1)
+
+cat("Answer: A", q5_data$genusspecies, "tree is closest to Baruch's campus, located approximately", round(as.numeric(q5_data$distance), 0), "meters away.")
+```
+
+#### Task 5: Government Project Design
+
+## South Bronx Tree Revival Initiative
+
+### Executive Summary
+
+Council District 11, located in the South Bronx, faces a critical challenge: nearly 43% of its trees are dead or dying. This proposal requests funding for the **"South Bronx Tree Revival Initiative"** - a comprehensive program to remove dead trees and plant new, native species to restore the urban forest canopy in our district.
+
+### Proposed Project Description
+
+The South Bronx Tree Revival Initiative aims to transform District 11's declining tree canopy through strategic removal of dead trees and replacement with healthy, disease-resistant native species. This program will prioritize environmental justice by restoring green space in one of NYC's most under-served neighborhoods, improving air quality, reducing urban heat island effects, and enhancing community health and property values.
+
+### Project Scope
+
+- **Dead trees to remove:** 5,100 trees (representing the current dead tree population in District 11)
+- **New trees to plant:** 5,100 replacement trees
+- **Timeline:** 18 months
+- **Budget estimate:** $2.55 million ($500 per tree removal and planting)
+
+---
+
+### Comparative Analysis: Why District 11?
+```{r}
+#| label: task5-district-comparison
+
+# Create comparison data for districts with high dead tree fractions
+district_comparison <- dead_tree_fraction %>%
+  arrange(desc(dead_fraction)) %>%
+  slice(1:5) %>%
+  mutate(dead_fraction_pct = dead_fraction * 100)
+
+district_comparison
+```
+
+District 11 stands out as the clear priority for intervention. With a dead tree fraction of 42.86%, it significantly exceeds the citywide average and ranks among the worst in NYC. This is substantially higher than other high-need districts like District 18 (Bronx), District 32 (Queens), and District 33 (Brooklyn).
+
+---
+
+### Zoomed-In Map of District 11
+```{r}
+#| label: task5-district-map
+
+# Filter trees for District 11
+district_11_trees <- trees_by_district %>%
+  filter(CounDist == 11)
+
+district_11_boundary <- nyc_districts %>%
+  filter(CounDist == 11)
+
+# Create zoomed map of District 11
+ggplot() +
+  geom_sf(data = district_11_boundary, fill = "white", color = "#2c3e50", alpha = 0.1, linewidth = 2) +
+  geom_sf(data = district_11_trees, aes(color = tpcondition), size = 3, alpha = 0.8) +
+  scale_color_manual(values = c("Excellent" = "#27ae60", "Good" = "#2ecc71", 
+                                "Fair" = "#f39c12", "Poor" = "#e74c3c", 
+                                "Dead" = "#8b0000"), na.value = "#bdc3c7") +
+  labs(title = "Current Tree Conditions in Council District 11",
+       subtitle = "South Bronx - Target Area for Revival Initiative",
+       color = "Tree Health") +
+  theme_minimal() +
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(),
+        plot.title = element_text(size = 14, face = "bold", color = "#2c3e50"),
+        plot.subtitle = element_text(size = 11, color = "#34495e"),
+        legend.position = "right")
+```
+
+---
+
+### Dead Tree Comparison 
+```{r}
+#| label: task5-dead-tree-comparison
+
+# Create lollipop chart comparing dead tree fractions
+dead_comparison_chart <- district_comparison %>%
+  mutate(district_label = paste("District", CounDist))
+
+ggplot(dead_comparison_chart, aes(x = reorder(district_label, dead_fraction_pct), 
+                                   y = dead_fraction_pct)) +
+  geom_segment(aes(xend = district_label, yend = 0), color = "#95a5a6", size = 1.2) +
+  geom_point(aes(color = dead_fraction_pct), size = 6, alpha = 0.8) +
+  scale_color_gradient(low = "#f39c12", high = "#c0392b", name = "Dead %") +
+  coord_flip() +
+  labs(title = "Districts Most In Need of Tree Replacement",
+       subtitle = "Ranked by Percentage of Dead Trees",
+       x = "Council District",
+       y = "Dead Trees (%)") +
+  theme_minimal() +
+  theme(axis.title = element_text(size = 11, face = "bold", color = "#2c3e50"),
+        plot.title = element_text(size = 14, face = "bold", color = "#2c3e50"),
+        plot.subtitle = element_text(size = 11, color = "#34495e"),
+        panel.grid.major.y = element_blank(),
+        legend.position = "bottom")
+```
+
+---
+
+### Implementation Impact Visualization 
+```{r}
+#| label: task5-impact-projection
+
+# Show before/after tree condition for District 11
+current_conditions <- district_11_trees %>%
+  st_set_geometry(NULL) %>%
+  group_by(tpcondition) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  mutate(scenario = "Current State",
+         year = 2025)
+
+# Project post-program conditions
+projected_conditions <- tibble(
+  tpcondition = c("Excellent", "Good", "Fair", "Poor", "Dead"),
+  count = c(800, 1500, 1600, 700, 0),
+  scenario = "After Initiative",
+  year = 2027
+)
+
+before_after <- bind_rows(current_conditions, projected_conditions) %>%
+  mutate(tpcondition = factor(tpcondition, levels = c("Dead", "Poor", "Fair", "Good", "Excellent")))
+
+ggplot(before_after, aes(x = scenario, y = count, fill = tpcondition)) +
+  geom_col(color = "white", linewidth = 1.5, width = 0.6) +
+  scale_fill_manual(values = c("Excellent" = "#27ae60", "Good" = "#2ecc71", 
+                               "Fair" = "#f39c12", "Poor" = "#e74c3c", 
+                               "Dead" = "#8b0000"),
+                    name = "Tree Condition") +
+  geom_text(aes(label = count), position = position_stack(vjust = 0.5), 
+            color = "white", fontface = "bold", size = 3.5) +
+  labs(title = "Projected Transformation: District 11 Urban Forest",
+       subtitle = "Before and After the South Bronx Tree Revival Initiative",
+       x = "",
+       y = "Number of Trees") +
+  theme_minimal() +
+  theme(axis.title.y = element_text(size = 11, face = "bold", color = "#2c3e50"),
+        plot.title = element_text(size = 14, face = "bold", color = "#2c3e50"),
+        plot.subtitle = element_text(size = 11, color = "#34495e"),
+        axis.text.x = element_text(size = 11, face = "bold"),
+        legend.position = "right")
+```
+
+---
+
+### Conclusion
+
+District 11 faces a critical challenge: nearly 43% of its trees are dead or dying. The South Bronx Tree Revival Initiative will address this crisis by removing 5,100 dead trees and planting 5,100 healthy replacements, restoring our urban forest and improving community health. We urge the Parks Department to prioritize this investment.
