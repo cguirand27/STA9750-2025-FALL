@@ -21,13 +21,6 @@ format:
 ---
 
 ### Introduction
-```{r}
-#| label: intro-image
-#| fig-align: center
-#| out.width: "80%"
-
-knitr::include_graphics("https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800")
-```
 
 New York City's urban forest is one of its greatest assets. With nearly 900,000 trees representing over 500 species across 30,000 acres of parkland, the Department of Parks and Recreation maintains a living infrastructure that defines our city's character and improves the health of millions of residents. Despite this, this precious resource faces significant challenges: uneven distribution across neighborhoods, varying states of health, and the constant pressure of urban development.
 

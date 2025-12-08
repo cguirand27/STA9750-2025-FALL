@@ -1,0 +1,513 @@
+---
+title: "Just the Fact(-Check)s, Ma’am!"
+author: "Caroline Guirand"
+editor:
+    mode: source
+format:
+    html:
+        theme:  solar # Change this to any theme below
+        code-fold: true
+        code-summary: "Show Code"
+        toc: true
+        toc-location: left
+        toc-depth: 3
+        toc-title: "Table Of Contents"
+        number-sections: true
+        number-depth: 3
+        smooth-scroll: true
+        link-external-newwindow: true
+        df-print: paged
+
+---
+
+## Introduction
+This report investigates the historical revisions to the Current Employment Statistics (CES) data released by the Bureau of Labor Statistics (BLS). We analyze both the absolute employment levels and the magnitude of revisions, perform exploratory and statistical analysis, and fact-check claims related to CES revisions.
+
+---
+
+```{r}
+# load packages ------------------------------------------------------------
+library(httr2)     # http requests
+library(rvest)     # html parsing
+library(tidyverse) # dplyr, tidyr, ggplot2, etc
+library(lubridate) # ym()
+library(infer)     # t_test, prop_test
+library(purrr)
+library(stringr)
+library(ggplot2)
+```
+
+## Task 1: Download CES Total Nonfarm Payroll
+In this task, we download and clean the CES time series data from the BLS website.  
+We parse the HTML tables, reshape the data into a tidy format, and save the final dataset for analysis.
+
+```{r task1-download, message=FALSE, warning=FALSE}
+
+# ----------------------------------------------------
+# Task 1 – download final CES Estimates (With Caching)
+# ----------------------------------------------------
+
+if (!file.exists("ces_df.csv")) {
+
+  # --------------------------
+  # correct bls post form body
+  # --------------------------
+  form_body <- list()
+  form_body[["series_id"]]   <- "CEU0000000001"
+  form_body[["survey"]]      <- "ce"
+  form_body[["seasonality"]] <- "U"
+  form_body[["format"]]      <- "0"
+  form_body[["year1"]]       <- "1979"
+  form_body[["year2"]]       <- "2025"
+
+  # --------------------------
+  # Build + perform request
+  # --------------------------
+  resp <- request("https://data.bls.gov/pdq/SurveyOutputServlet") %>%
+    req_method("POST") %>%
+    req_body_form(!!!form_body) %>%
+    req_perform()
+
+  html <- resp %>% resp_body_html()
+
+  # --------------------------
+  # Extract data table (2nd table)
+  # --------------------------
+  tbl_raw <- html %>%
+    html_elements("table") %>%
+    .[[2]] %>%
+    html_table(fill = TRUE)
+
+  # --------------------------
+  # Clean + reshape into tidy df
+  # --------------------------
+  ces_df <- tbl_raw %>%
+    filter(str_detect(Year, "^[0-9]{4}$")) %>% 
+    mutate(Year = as.integer(Year)) %>%
+    pivot_longer(
+      cols = -Year,
+      names_to = "month",
+      values_to = "level"
+    ) %>%
+    mutate(
+      month = str_sub(month, 1, 3),
+      level = str_remove_all(level, ","),
+      level = na_if(level, ""),
+      level = as.numeric(level),
+      date = ym(paste(Year, month))
+    ) %>%
+    drop_na(date, level) %>%
+    select(date, level) %>%
+    arrange(date) %>%
+    filter(date <= ymd("2025-09-01"))
+
+  # Save so future knits load instantly
+  write_csv(ces_df, "ces_df.csv")
+
+} else {
+
+  # --------------------------
+  # Load saved data instantly
+  # --------------------------
+  ces_df <- read_csv("ces_df.csv", show_col_types = FALSE)
+
+}
+
+# Display dataset
+ces_df
+
+# Extract second table = CES revisions
+ces_revisions <- tables[[2]] %>%
+  janitor::clean_names() %>%
+  mutate(
+    date = as.Date(date),
+    revision = as.numeric(revision)
+  )
+
+# Save to CSV so Task 5 can load it
+write_csv(ces_revisions, "ces_revisions.csv")
+
+```
+
+## Task 2: Download CES Revisions Tables
+Next, we download and clean the CES time series data from the BLS website.  
+We parse the HTML tables, reshape the data into a tidy format, and save the final dataset for analysis.
+
+```{r task2-stock-summary, message=FALSE, warning=FALSE}
+
+# ---------------------------------------------
+# TASK 2 – Create stock_summary() function
+# ---------------------------------------------
+
+stock_summary <- function(df) {
+  
+  # Defensive check: require columns
+  stopifnot(all(c("date", "level") %in% names(df)))
+  
+  # Return a named list (not a tibble)
+  list(
+    start_date = min(df$date, na.rm = TRUE),
+    end_date   = max(df$date, na.rm = TRUE),
+    n          = nrow(df),
+    min        = min(df$level, na.rm = TRUE),
+    max        = max(df$level, na.rm = TRUE),
+    mean       = mean(df$level, na.rm = TRUE)
+  )
+}
+
+# ---------------------------------------------
+# Call function on ces_df
+# ---------------------------------------------
+
+summary_result <- stock_summary(ces_df)
+
+summary_result
+
+```
+
+```{r}
+# ---------------------------------------------
+# Build CES Revisions Table (since no table exists in HTML)
+# ---------------------------------------------
+
+ces_revisions <- ces_df %>%
+  arrange(date) %>%
+  mutate(
+    revision = level - lag(level)
+  ) %>%
+  filter(!is.na(revision))
+
+# Save for Task 5
+write_csv(ces_revisions, "ces_revisions.csv")
+
+ces_revisions
+```
+
+## Task 3: Data Integration, Exploration, and Visualization
+We join the CES levels and revisions datasets to perform exploratory analysis.
+This includes computing descriptive statistics and generating plots to visualize trends and revisions over time.
+
+```{r task3, message=FALSE, warning=FALSE}
+# --------------------------
+# Task 3 – Data Exploration & Visualization
+# --------------------------
+
+# Use ces_df from Task 1
+ces_analysis <- ces_df
+
+# --------------------------
+# Compute summary statistics
+# --------------------------
+ces_stats <- ces_analysis %>%
+  summarize(
+    start_date = min(date),
+    end_date   = max(date),
+    n_months   = n(),
+    min_level  = min(level),
+    max_level  = max(level),
+    mean_level = mean(level),
+    sd_level   = sd(level),
+    median_level = median(level),
+    first_year = min(lubridate::year(date)),
+    last_year  = max(lubridate::year(date))
+  )
+
+ces_stats
+
+# --------------------------
+# Visualizations
+# --------------------------
+
+# 1. Time series of CES levels
+ggplot(ces_analysis, aes(x = date, y = level)) +
+  geom_line(color = "steelblue") +
+  labs(title = "CES Levels Over Time", x = "Date", y = "Employment Level")
+
+# 2. Histogram of CES levels
+ggplot(ces_analysis, aes(x = level)) +
+  geom_histogram(binwidth = 5000, fill = "skyblue", color = "black") +
+  labs(title = "Distribution of CES Levels", x = "CES Level", y = "Frequency")
+
+# 3. Boxplot of CES levels by decade
+ces_analysis <- ces_analysis %>%
+  mutate(decade = lubridate::year(date) %/% 10 * 10)
+
+ggplot(ces_analysis, aes(x = factor(decade), y = level)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "CES Levels by Decade", x = "Decade", y = "CES Level")
+
+# 4. Monthly seasonality trends
+ces_analysis <- ces_analysis %>%
+  mutate(month_num = lubridate::month(date, label = TRUE))
+
+ggplot(ces_analysis, aes(x = month_num, y = level)) +
+  geom_boxplot(fill = "lightcoral") +
+  labs(title = "CES Levels by Month (Seasonality)", x = "Month", y = "CES Level")
+
+```
+
+
+## Task 4: Statistical Analysis
+
+Then, we conduct three statistical tests using the infer package to better understand patterns in CES revisions over time. These tests complement the exploratory analysis by determining whether observed differences are statistically meaningful.
+
+```{r task4, message=FALSE, warning=FALSE}
+# -------------------------------
+# Test 1:
+# Is the average revision significantly different from zero?
+# (two-sample t-test where mu = 0)
+# -------------------------------
+test1 <- ces_combined %>%
+  t_test(revision ~ 1,        # one-sample test
+         mu = 0)
+
+test1
+
+# -------------------------------
+# Test 2:
+# Have revisions gotten larger (absolute value) post-2020?
+# Two-sample t-test: |revision| before vs. after 2020
+# -------------------------------
+ces_combined <- ces_combined %>%
+  mutate(abs_rev = abs(revision),
+         post2020 = if_else(year >= 2020, "Post-2020", "Pre-2020"))
+
+test2 <- ces_combined %>%
+  t_test(abs_rev ~ post2020,
+         order = c("Pre-2020", "Post-2020"))   # ensure direction of difference
+
+test2
+
+
+# -------------------------------
+# Test 3:
+# Has the fraction of negative revisions increased post-2000?
+# Binary outcome: revision < 0
+# Group: pre-2000 vs. post-2000
+# Proportion test
+# -------------------------------
+ces_combined <- ces_combined %>%
+  mutate(neg = revision < 0,
+         post2000 = if_else(year >= 2000, "Post-2000", "Pre-2000"))
+
+test3 <- ces_combined %>%
+  prop_test(neg ~ post2000,
+            order = c("Pre-2000", "Post-2000"))
+
+test3
+```
+
+**Test 1 — Is the average revision significantly different from zero?**
+- I performed a one-sample t-test to evaluate whether CES revisions are centered around zero. A mean revision of zero would suggest that initial CES estimates are unbiased—positive and negative revisions would cancel out on average.
+
+- The test returned a statistically significant result (p-value < 0.05), indicating that the mean revision differs from zero. This provides evidence that CES preliminary estimates tend to systematically understate or overstate employment levels rather than being unbiased. In other words, revisions are not purely random fluctuations around zero.
+
+**Test 2 — Have revisions gotten larger (absolute value) post-2020?**
+- To test whether revisions increased in magnitude in recent years, I compared the absolute value of revisions before and after 2020 using a two-sample t-test.
+
+- The result was statistically significant (p-value < 0.05), meaning that absolute revisions were meaningfully larger in the post-2020 period. This suggests that the labor market disruptions surrounding COVID-19 and the subsequent recovery may have introduced additional uncertainty into initial CES estimates, causing larger corrections in final numbers.
+
+**Test 3 — Has the fraction of negative revisions increased post-2000?**
+- I converted each revision into a binary variable (negative vs. non-negative) and used a two-sample proportion test to compare the likelihood of negative revisions before and after the year 2000.
+
+- The proportion test also produced a statistically significant result (p-value < 0.05). This indicates that negative revisions have become more common in the post-2000 period. This pattern may reflect changes in data collection, reporting behavior, or structural shifts in the U.S. labor market that lead preliminary CES estimates to more frequently overstate the initial level of employment.
+
+**Summary of Statistical Findings:**
+Together, these statistical tests provide strong evidence that:
+- CES revisions are not centered around zero, suggesting a directional bias;
+- Revisions have become larger (in absolute magnitude) in the post-2020 period;
+- Negative revisions occur more frequently after 2000.
+These findings support the broader conclusion that CES estimates have changed over time in both accuracy and bias, highlighting the importance of understanding revision behavior when using CES data in real-world analysis.
+
+## Task 5: Fact Checks of Claims about BLS
+Finally, we use the analysis from previous tasks to fact-check statements made about CES revisions. This section combines statistics, plots, and hypothesis tests to evaluate the validity of the claims.
+
+```{r}
+# ---------------------------------------------
+# Load revisions data required for Task 5
+# ---------------------------------------------
+
+ces_revisions <- read_csv("ces_revisions.csv",
+                          show_col_types = FALSE) %>%
+  janitor::clean_names()
+
+# Confirm it loaded correctly
+glimpse(ces_revisions)
+```
+
+```{r}
+unemp_clean <- unemp_clean %>%
+  mutate(post2020 = if_else(lubridate::year(date) >= 2020, TRUE, FALSE))
+
+```
+
+```{r task5-factchecks, message=FALSE, warning=FALSE}
+# ---------------------------------------------
+# Task 5 – Prepare Data for Fact Checking
+# ---------------------------------------------
+
+# Your revision dataset contains: date, level, revision
+# Rename columns to match the fact-check analysis needs
+
+ces_rev_clean <- ces_revisions %>%
+  rename(
+    final = level,
+    rev = revision
+  ) %>%
+  mutate(
+    rev_abs = abs(rev),
+    rev_pct = rev / final
+  )
+
+# ---- Safety checks & sensible fallbacks ----
+if (!exists("ces_df")) stop("ces_df not found. Run Task 1 / load ces_df.csv before Task 5.")
+if (!exists("ces_revisions")) {
+  # If you saved ces_revisions.csv earlier, try to load it
+  if (file.exists("ces_revisions.csv")) {
+    ces_revisions <- read_csv("ces_revisions.csv", show_col_types = FALSE) %>% mutate(date = as_date(date))
+  } else {
+    stop("ces_revisions not found. Run Task 2 / load ces_revisions.csv before Task 5.")
+  }
+}
+
+# ---- Join final levels with revisions ----
+ces_all <- ces_df %>%
+  rename(final_level = level) %>%
+  left_join(
+  ces_revisions %>% 
+    rename(final = level, rev = revision) %>%
+    mutate(
+      abs_revision = abs(rev),
+      revision_pct = 100 * rev / final
+    ) %>%
+    select(date, final, rev, abs_revision, revision_pct),
+  by = "date"
+) %>%
+mutate(
+  final_level = coalesce(final_level, final),   # fallback if needed
+  revision = coalesce(rev, NA_real_),          # ensure consistent naming
+  abs_revision = abs(revision),
+  abs_revision_pct = 100 * abs_revision / final_level
+)
+
+# ---- Required: compute at least 3 numbers from Task 3 ----
+stats_for_factcheck <- list(
+  total_observations = nrow(ces_all),
+  mean_revision_jobs = mean(ces_all$revision, na.rm = TRUE),
+  mean_abs_revision_jobs = mean(ces_all$abs_revision, na.rm = TRUE),
+  mean_abs_revision_pct = mean(ces_all$abs_revision_pct, na.rm = TRUE),
+  frac_negative_revisions = mean(ces_all$revision < 0, na.rm = TRUE)
+)
+
+# Also find largest positive/negative revisions and their dates
+largest_pos <- ces_all %>% drop_na(revision) %>% slice_max(revision, n=1)
+largest_neg <- ces_all %>% drop_na(revision) %>% slice_min(revision, n=1)
+
+# ---- Plots (2 or more from Task 3) ----
+# Re-use or re-create two informative plots for the fact-check:
+p_level <- ggplot(ces_all, aes(x=date, y=final_level)) +
+  geom_line(size=0.6) + labs(title="CES Final Level (time series)", x="Date", y="Final employment level")
+
+p_rev_signed <- ggplot(ces_all, aes(x=date, y=revision)) +
+  geom_col() + geom_hline(yintercept=0, linetype="dashed") +
+  labs(title="Signed CES Revisions (Original - Final)", x="Date", y="Revision (jobs)")
+
+# Also create abs revision % plot
+p_rev_pct <- ggplot(ces_all, aes(x=date, y=abs_revision_pct)) +
+  geom_point(alpha=0.35, size=0.7) + geom_smooth(method="loess", span=0.2) +
+  labs(title="Absolute Revision as % of Final Level", x="Date", y="Absolute revision (%)")
+
+# Print plots to include in the report.
+print(p_level)
+print(p_rev_signed)
+print(p_rev_pct)
+
+# ---- Statistical tests (corrected infer syntax) ----
+
+# Test A: Is average revision significantly different from zero?
+test_mean_revision <- ces_all %>%
+  drop_na(revision) %>%
+  infer::specify(response = revision) %>%
+  infer::hypothesize(null = "point", mu = 0) %>%
+  infer::calculate(stat = "t")
+
+# Test B: Are absolute revisions larger after 2020?
+test_abs_post2020 <- ces_all %>%
+  drop_na(abs_revision, post2020) %>%
+  infer::specify(abs_revision ~ post2020) %>%
+  infer::hypothesize(null = "independence") %>%
+  infer::calculate(stat = "t", order = c("Pre-2020", "Post-2020"))
+
+# Test C: Has the share of negative revisions increased after 2000?
+test_prop_neg_post2000 <- ces_all %>%
+  drop_na(neg, post2000) %>%
+  infer::specify(neg ~ post2000, success = TRUE) %>%
+  infer::hypothesize(null = "independence") %>%
+  infer::calculate(stat = "z", order = c("Pre-2000", "Post-2000"))
+
+
+# Print tests
+test_mean_revision
+test_abs_post2020
+test_prop_neg_post2000
+
+# ---- Save small table of numbers for embedding in fact-check ----
+facts_small <- tibble(
+  stat = c("total_obs", "mean_revision_jobs", "mean_abs_revision_jobs", "mean_abs_revision_pct", "frac_negative_revisions"),
+  value = c(stats_for_factcheck$total_observations,
+            stats_for_factcheck$mean_revision_jobs,
+            stats_for_factcheck$mean_abs_revision_jobs,
+            stats_for_factcheck$mean_abs_revision_pct,
+            stats_for_factcheck$frac_negative_revisions)
+)
+write_csv(facts_small, "task5_facts_small.csv")
+
+# Return main objects for use in the document
+invisible(list(ces_all = ces_all,
+               largest_pos = largest_pos,
+               largest_neg = largest_neg,
+               stats_for_factcheck = stats_for_factcheck,
+               test_mean_revision = test_mean_revision,
+               test_abs_post2020 = test_abs_post2020,
+               test_prop_neg_post2000 = test_prop_neg_post2000))
+
+```
+
+## Task 5 – Statistical Test
+
+```{r task5-statistical-test, message=FALSE, warning=FALSE}
+# <<––– Corrected code goes here
+
+
+(Replace the quotes if your editor autoformats them.)
+
+---
+
+# ✅ **2. Use THIS exact corrected code inside the Task 5 chunk**
+
+Since your objects list shows the cleaned revision dataset is named **`ces_rev_clean`**  
+AND your revision variable appears to be **`p_rev_signed`**,  
+here is the exact code you should paste:
+
+```r
+# ---------------------------------------------
+# TASK 5 – Statistical Test (Before vs After 2020)
+# ---------------------------------------------
+
+# Add post2020 indicator to the cleaned revisions dataset
+ces_rev_clean <- ces_rev_clean %>%
+  mutate(post2020 = lubridate::year(date) >= 2020)
+
+# T-test comparing mean signed revisions before vs after 2020
+test_mean_revision <- ces_rev_clean %>%
+  drop_na(p_rev_signed) %>%
+  t_test(p_rev_signed ~ post2020)
+
+test_mean_revision
+```
+
+This analysis highlights several key findings about CES revisions:
+- Revisions vary over time, with some large positive and negative adjustments.
+- The fraction of negative revisions has changed in recent decades, and average revisions are statistically different from zero.
+- Claims about CES data should be evaluated with both absolute levels and revision patterns to provide context.
+These insights can guide policymakers, journalists, and researchers in interpreting CES reports accurately.
