@@ -116,17 +116,6 @@ if (!file.exists("ces_df.csv")) {
 # Display dataset
 ces_df
 
-# Extract second table = CES revisions
-ces_revisions <- tables[[2]] %>%
-  janitor::clean_names() %>%
-  mutate(
-    date = as.Date(date),
-    revision = as.numeric(revision)
-  )
-
-# Save to CSV so Task 5 can load it
-write_csv(ces_revisions, "ces_revisions.csv")
-
 ```
 
 ## Task 2: Download CES Revisions Tables
@@ -257,7 +246,7 @@ Then, we conduct three statistical tests using the infer package to better under
 # Is the average revision significantly different from zero?
 # (two-sample t-test where mu = 0)
 # -------------------------------
-test1 <- ces_combined %>%
+test1 <- ces_revisions %>%
   t_test(revision ~ 1,        # one-sample test
          mu = 0)
 
@@ -268,11 +257,11 @@ test1
 # Have revisions gotten larger (absolute value) post-2020?
 # Two-sample t-test: |revision| before vs. after 2020
 # -------------------------------
-ces_combined <- ces_combined %>%
+ces_revisions <- ces_revisions %>%
   mutate(abs_rev = abs(revision),
          post2020 = if_else(year >= 2020, "Post-2020", "Pre-2020"))
 
-test2 <- ces_combined %>%
+test2 <- ces_revisions %>%
   t_test(abs_rev ~ post2020,
          order = c("Pre-2020", "Post-2020"))   # ensure direction of difference
 
@@ -286,11 +275,11 @@ test2
 # Group: pre-2000 vs. post-2000
 # Proportion test
 # -------------------------------
-ces_combined <- ces_combined %>%
+ces_revisions <- ces_revisions %>%
   mutate(neg = revision < 0,
          post2000 = if_else(year >= 2000, "Post-2000", "Pre-2000"))
 
-test3 <- ces_combined %>%
+test3 <- ces_revisions %>%
   prop_test(neg ~ post2000,
             order = c("Pre-2000", "Post-2000"))
 
@@ -423,73 +412,43 @@ print(p_rev_signed)
 print(p_rev_pct)
 
 # ---- Statistical tests (corrected infer syntax) ----
+ces_all <- ces_all %>%
+  mutate(
+    year = lubridate::year(date),
+    post2020 = if_else(year >= 2020, "Post-2020", "Pre-2020"),
+    post2000 = if_else(year >= 2000, "Post-2000", "Pre-2000"),
+    neg = revision < 0
+  )
 
 # Test A: Is average revision significantly different from zero?
 test_mean_revision <- ces_all %>%
   drop_na(revision) %>%
-  infer::specify(response = revision) %>%
-  infer::hypothesize(null = "point", mu = 0) %>%
-  infer::calculate(stat = "t")
+  t_test(response = revision, 
+         null = "point",
+         mu = 0)
 
 # Test B: Are absolute revisions larger after 2020?
 test_abs_post2020 <- ces_all %>%
   drop_na(abs_revision, post2020) %>%
-  infer::specify(abs_revision ~ post2020) %>%
-  infer::hypothesize(null = "independence") %>%
-  infer::calculate(stat = "t", order = c("Pre-2020", "Post-2020"))
+  t_test(abs_revision ~ post2020, 
+         order = c("Pre-2020", "Post-2020"))
 
 # Test C: Has the share of negative revisions increased after 2000?
 test_prop_neg_post2000 <- ces_all %>%
   drop_na(neg, post2000) %>%
-  infer::specify(neg ~ post2000, success = TRUE) %>%
-  infer::hypothesize(null = "independence") %>%
-  infer::calculate(stat = "z", order = c("Pre-2000", "Post-2000"))
-
+  prop_test(neg ~ post2000, 
+            order = c("Pre-2000", "Post-2000"))
 
 # Print tests
 test_mean_revision
 test_abs_post2020
 test_prop_neg_post2000
 
-# ---- Save small table of numbers for embedding in fact-check ----
-facts_small <- tibble(
-  stat = c("total_obs", "mean_revision_jobs", "mean_abs_revision_jobs", "mean_abs_revision_pct", "frac_negative_revisions"),
-  value = c(stats_for_factcheck$total_observations,
-            stats_for_factcheck$mean_revision_jobs,
-            stats_for_factcheck$mean_abs_revision_jobs,
-            stats_for_factcheck$mean_abs_revision_pct,
-            stats_for_factcheck$frac_negative_revisions)
-)
-write_csv(facts_small, "task5_facts_small.csv")
-
-# Return main objects for use in the document
-invisible(list(ces_all = ces_all,
-               largest_pos = largest_pos,
-               largest_neg = largest_neg,
-               stats_for_factcheck = stats_for_factcheck,
-               test_mean_revision = test_mean_revision,
-               test_abs_post2020 = test_abs_post2020,
-               test_prop_neg_post2000 = test_prop_neg_post2000))
-
 ```
 
 ## Task 5 – Statistical Test
 
 ```{r task5-statistical-test, message=FALSE, warning=FALSE}
-# <<––– Corrected code goes here
-
-
-(Replace the quotes if your editor autoformats them.)
-
----
-
-# ✅ **2. Use THIS exact corrected code inside the Task 5 chunk**
-
-Since your objects list shows the cleaned revision dataset is named **`ces_rev_clean`**  
-AND your revision variable appears to be **`p_rev_signed`**,  
-here is the exact code you should paste:
-
-```r
 # ---------------------------------------------
 # TASK 5 – Statistical Test (Before vs After 2020)
 # ---------------------------------------------
@@ -506,8 +465,14 @@ test_mean_revision <- ces_rev_clean %>%
 test_mean_revision
 ```
 
-This analysis highlights several key findings about CES revisions:
-- Revisions vary over time, with some large positive and negative adjustments.
-- The fraction of negative revisions has changed in recent decades, and average revisions are statistically different from zero.
-- Claims about CES data should be evaluated with both absolute levels and revision patterns to provide context.
-These insights can guide policymakers, journalists, and researchers in interpreting CES reports accurately.
+**Test A Interpretation:** There is no statistically significant evidence that the average CES revision differs from zero. On average, the revisions are small and not directionally biased; BLS does not consistently overstate or understate employment.
+
+**Test B Interpretation:** There is no statistically significant difference in the size of absolute revisions before vs. after 2020. Revisions may appear somewhat larger after the pandemic onset, but the evidence is not strong enough to confirm a real change.
+
+**Test B Interpretation:** There is strong statistical evidence that the fraction of negative revisions increased after 2000. The post-2000 period has a 17–32 percentage point higher rate of negative revisions.
+This suggests a real structural shift in how preliminary CES numbers differ from final estimates.
+
+## Conclusion
+Based on the statistical analysis, the average CES revision is not significantly different from zero, indicating no systematic bias in BLS updates. Absolute revision size also does not differ significantly between the pre-2020 and post-2020 periods, despite the pandemic’s potential for increased volatility. However, the proportion of negative revisions is significantly higher after 2000, suggesting that revisions more frequently adjust employment estimates downward in the modern era. This aligns with broader changes in the labor market and data collection environment.
+
+Thank you for tuning in to this report!
