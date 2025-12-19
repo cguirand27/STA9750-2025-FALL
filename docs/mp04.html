@@ -137,7 +137,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table Of Contents</h2>
    
   <ul>
-  <li><a href="#task-1---download-final-ces-estimates" id="toc-task-1---download-final-ces-estimates" class="nav-link active" data-scroll-target="#task-1---download-final-ces-estimates"><span class="header-section-number">1</span> Task 1 - Download Final CES Estimates</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
+  <li><a href="#task-1-download-ces-total-nonfarm-payroll" id="toc-task-1-download-ces-total-nonfarm-payroll" class="nav-link" data-scroll-target="#task-1-download-ces-total-nonfarm-payroll"><span class="header-section-number">2</span> Task 1: Download CES Total Nonfarm Payroll</a></li>
+  <li><a href="#task-2-download-ces-revisions-tables" id="toc-task-2-download-ces-revisions-tables" class="nav-link" data-scroll-target="#task-2-download-ces-revisions-tables"><span class="header-section-number">3</span> Task 2: Download CES Revisions Tables</a></li>
+  <li><a href="#task-3-data-integration-exploration-and-visualization" id="toc-task-3-data-integration-exploration-and-visualization" class="nav-link" data-scroll-target="#task-3-data-integration-exploration-and-visualization"><span class="header-section-number">4</span> Task 3: Data Integration, Exploration, and Visualization</a></li>
+  <li><a href="#task-4-statistical-analysis" id="toc-task-4-statistical-analysis" class="nav-link" data-scroll-target="#task-4-statistical-analysis"><span class="header-section-number">5</span> Task 4: Statistical Analysis</a></li>
+  <li><a href="#task-5-fact-checks-of-claims-about-bls" id="toc-task-5-fact-checks-of-claims-about-bls" class="nav-link" data-scroll-target="#task-5-fact-checks-of-claims-about-bls"><span class="header-section-number">6</span> Task 5: Fact Checks of Claims about BLS</a></li>
+  <li><a href="#task-5-statistical-test" id="toc-task-5-statistical-test" class="nav-link" data-scroll-target="#task-5-statistical-test"><span class="header-section-number">7</span> Task 5 – Statistical Test</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">8</span> Conclusion</a></li>
   </ul>
 </nav>
 </nav>
@@ -173,6 +180,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<section id="introduction" class="level2" data-number="1">
+<h2 data-number="1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">1</span> Introduction</h2>
+<p>This report investigates the historical revisions to the Current Employment Statistics (CES) data released by the Bureau of Labor Statistics (BLS). We analyze both the absolute employment levels and the magnitude of revisions, perform exploratory and statistical analysis, and fact-check claims related to CES revisions.</p>
+<hr>
 <div class="cell">
 <details class="code-fold">
 <summary>Show Code</summary>
@@ -198,11 +209,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>Show Code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate) <span class="co"># ym()</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(infer)     <span class="co"># t_test, prop_test</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<section id="task-1---download-final-ces-estimates" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="task-1---download-final-ces-estimates"><span class="header-section-number">1</span> Task 1 - Download Final CES Estimates</h2>
+</section>
+<section id="task-1-download-ces-total-nonfarm-payroll" class="level2" data-number="2">
+<h2 data-number="2" class="anchored" data-anchor-id="task-1-download-ces-total-nonfarm-payroll"><span class="header-section-number">2</span> Task 1: Download CES Total Nonfarm Payroll</h2>
+<p>In this task, we download and clean the CES time series data from the BLS website.<br>
+We parse the HTML tables, reshape the data into a tidy format, and save the final dataset for analysis.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show Code</summary>
@@ -287,6 +303,516 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="task-2-download-ces-revisions-tables" class="level2" data-number="3">
+<h2 data-number="3" class="anchored" data-anchor-id="task-2-download-ces-revisions-tables"><span class="header-section-number">3</span> Task 2: Download CES Revisions Tables</h2>
+<p>Next, we download and clean the CES time series data from the BLS website.<br>
+We parse the HTML tables, reshape the data into a tidy format, and save the final dataset for analysis.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TASK</span><span class="co"> 2 – Create stock_summary() function</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>stock_summary <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Defensive check: require columns</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">all</span>(<span class="fu">c</span>(<span class="st">"date"</span>, <span class="st">"level"</span>) <span class="sc">%in%</span> <span class="fu">names</span>(df)))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return a named list (not a tibble)</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">start_date =</span> <span class="fu">min</span>(df<span class="sc">$</span>date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">end_date   =</span> <span class="fu">max</span>(df<span class="sc">$</span>date, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n          =</span> <span class="fu">nrow</span>(df),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">min        =</span> <span class="fu">min</span>(df<span class="sc">$</span>level, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">max        =</span> <span class="fu">max</span>(df<span class="sc">$</span>level, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean       =</span> <span class="fu">mean</span>(df<span class="sc">$</span>level, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Call function on ces_df</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>summary_result <span class="ot">&lt;-</span> <span class="fu">stock_summary</span>(ces_df)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>summary_result</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>$start_date
+[1] "2015-01-01"
+
+$end_date
+[1] "2025-07-01"
+
+$n
+[1] 127
+
+$min
+[1] 130252
+
+$max
+[1] 160256
+
+$mean
+[1] 149297.9</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Build CES Revisions Table (since no table exists in HTML)</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>ces_revisions <span class="ot">&lt;-</span> ces_df <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date) <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">revision =</span> level <span class="sc">-</span> <span class="fu">lag</span>(level)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(revision))</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Save for Task 5</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(ces_revisions, <span class="st">"ces_revisions.csv"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>ces_revisions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["level"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["revision"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"2015-02-01","2":"139324","3":"833"},{"1":"2015-03-01","2":"140080","3":"756"},{"1":"2015-04-01","2":"141264","3":"1184"},{"1":"2015-05-01","2":"142205","3":"941"},{"1":"2015-06-01","2":"142681","3":"476"},{"1":"2015-07-01","2":"141731","3":"-950"},{"1":"2015-08-01","2":"141921","3":"190"},{"1":"2015-09-01","2":"142478","3":"557"},{"1":"2015-10-01","2":"143627","3":"1149"},{"1":"2015-11-01","2":"144048","3":"421"},{"1":"2015-12-01","2":"144045","3":"-3"},{"1":"2016-01-01","2":"141073","3":"-2972"},{"1":"2016-02-01","2":"141900","3":"827"},{"1":"2016-03-01","2":"142797","3":"897"},{"1":"2016-04-01","2":"143892","3":"1095"},{"1":"2016-05-01","2":"144541","3":"649"},{"1":"2016-06-01","2":"145205","3":"664"},{"1":"2016-07-01","2":"144232","3":"-973"},{"1":"2016-08-01","2":"144484","3":"252"},{"1":"2016-09-01","2":"145149","3":"665"},{"1":"2016-10-01","2":"146031","3":"882"},{"1":"2016-11-01","2":"146465","3":"434"},{"1":"2016-12-01","2":"146252","3":"-213"},{"1":"2017-01-01","2":"143374","3":"-2878"},{"1":"2017-02-01","2":"144405","3":"1031"},{"1":"2017-03-01","2":"145061","3":"656"},{"1":"2017-04-01","2":"146085","3":"1024"},{"1":"2017-05-01","2":"146924","3":"839"},{"1":"2017-06-01","2":"147565","3":"641"},{"1":"2017-07-01","2":"146464","3":"-1101"},{"1":"2017-08-01","2":"146781","3":"317"},{"1":"2017-09-01","2":"147169","3":"388"},{"1":"2017-10-01","2":"148182","3":"1013"},{"1":"2017-11-01","2":"148758","3":"576"},{"1":"2017-12-01","2":"148509","3":"-249"},{"1":"2018-01-01","2":"145413","3":"-3096"},{"1":"2018-02-01","2":"146648","3":"1235"},{"1":"2018-03-01","2":"147353","3":"705"},{"1":"2018-04-01","2":"148329","3":"976"},{"1":"2018-05-01","2":"149264","3":"935"},{"1":"2018-06-01","2":"149930","3":"666"},{"1":"2018-07-01","2":"148767","3":"-1163"},{"1":"2018-08-01","2":"149236","3":"469"},{"1":"2018-09-01","2":"149546","3":"310"},{"1":"2018-10-01","2":"150554","3":"1008"},{"1":"2018-11-01","2":"151032","3":"478"},{"1":"2018-12-01","2":"150831","3":"-201"},{"1":"2019-01-01","2":"147879","3":"-2952"},{"1":"2019-02-01","2":"148684","3":"805"},{"1":"2019-03-01","2":"149360","3":"676"},{"1":"2019-04-01","2":"150422","3":"1062"},{"1":"2019-05-01","2":"151096","3":"674"},{"1":"2019-06-01","2":"151713","3":"617"},{"1":"2019-07-01","2":"150658","3":"-1055"},{"1":"2019-08-01","2":"151094","3":"436"},{"1":"2019-09-01","2":"151509","3":"415"},{"1":"2019-10-01","2":"152501","3":"992"},{"1":"2019-11-01","2":"153094","3":"593"},{"1":"2019-12-01","2":"152846","3":"-248"},{"1":"2020-01-01","2":"150057","3":"-2789"},{"1":"2020-02-01","2":"150966","3":"909"},{"1":"2020-03-01","2":"149952","3":"-1014"},{"1":"2020-04-01","2":"130252","3":"-19700"},{"1":"2020-05-01","2":"133421","3":"3169"},{"1":"2020-06-01","2":"138507","3":"5086"},{"1":"2020-07-01","2":"139105","3":"598"},{"1":"2020-08-01","2":"140728","3":"1623"},{"1":"2020-09-01","2":"141957","3":"1229"},{"1":"2020-10-01","2":"143565","3":"1608"},{"1":"2020-11-01","2":"144117","3":"552"},{"1":"2020-12-01","2":"143604","3":"-513"},{"1":"2021-01-01","2":"140975","3":"-2629"},{"1":"2021-02-01","2":"142129","3":"1154"},{"1":"2021-03-01","2":"143308","3":"1179"},{"1":"2021-04-01","2":"144403","3":"1095"},{"1":"2021-05-01","2":"145391","3":"988"},{"1":"2021-06-01","2":"146627","3":"1236"},{"1":"2021-07-01","2":"146619","3":"-8"},{"1":"2021-08-01","2":"147159","3":"540"},{"1":"2021-09-01","2":"147918","3":"759"},{"1":"2021-10-01","2":"149606","3":"1688"},{"1":"2021-11-01","2":"150543","3":"937"},{"1":"2021-12-01","2":"150740","3":"197"},{"1":"2022-01-01","2":"147932","3":"-2808"},{"1":"2022-02-01","2":"149606","3":"1674"},{"1":"2022-03-01","2":"150413","3":"807"},{"1":"2022-04-01","2":"151434","3":"1021"},{"1":"2022-05-01","2":"152264","3":"830"},{"1":"2022-06-01","2":"153176","3":"912"},{"1":"2022-07-01","2":"152813","3":"-363"},{"1":"2022-08-01","2":"153209","3":"396"},{"1":"2022-09-01","2":"153730","3":"521"},{"1":"2022-10-01","2":"154936","3":"1206"},{"1":"2022-11-01","2":"155519","3":"583"},{"1":"2022-12-01","2":"155210","3":"-309"},{"1":"2023-01-01","2":"152689","3":"-2521"},{"1":"2023-02-01","2":"153818","3":"1129"},{"1":"2023-03-01","2":"154253","3":"435"},{"1":"2023-04-01","2":"155155","3":"902"},{"1":"2023-05-01","2":"156038","3":"883"},{"1":"2023-06-01","2":"156701","3":"663"},{"1":"2023-07-01","2":"155779","3":"-922"},{"1":"2023-08-01","2":"156107","3":"328"},{"1":"2023-09-01","2":"156563","3":"456"},{"1":"2023-10-01","2":"157531","3":"968"},{"1":"2023-11-01","2":"157950","3":"419"},{"1":"2023-12-01","2":"157828","3":"-122"},{"1":"2024-01-01","2":"154942","3":"-2886"},{"1":"2024-02-01","2":"156007","3":"1065"},{"1":"2024-03-01","2":"156612","3":"605"},{"1":"2024-04-01","2":"157438","3":"826"},{"1":"2024-05-01","2":"158256","3":"818"},{"1":"2024-06-01","2":"158722","3":"466"},{"1":"2024-07-01","2":"157771","3":"-951"},{"1":"2024-08-01","2":"158070","3":"299"},{"1":"2024-09-01","2":"158527","3":"457"},{"1":"2024-10-01","2":"159352","3":"825"},{"1":"2024-11-01","2":"159882","3":"530"},{"1":"2024-12-01","2":"159923","3":"41"},{"1":"2025-01-01","2":"157095","3":"-2828"},{"1":"2025-02-01","2":"157944","3":"849"},{"1":"2025-03-01","2":"158402","3":"458"},{"1":"2025-04-01","2":"159227","3":"825"},{"1":"2025-05-01","2":"159930","3":"703"},{"1":"2025-06-01","2":"160256","3":"326"},{"1":"2025-07-01","2":"159219","3":"-1037"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+</section>
+<section id="task-3-data-integration-exploration-and-visualization" class="level2" data-number="4">
+<h2 data-number="4" class="anchored" data-anchor-id="task-3-data-integration-exploration-and-visualization"><span class="header-section-number">4</span> Task 3: Data Integration, Exploration, and Visualization</h2>
+<p>We join the CES levels and revisions datasets to perform exploratory analysis. This includes computing descriptive statistics and generating plots to visualize trends and revisions over time.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Task 3 – Data Exploration &amp; Visualization</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Use ces_df from Task 1</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>ces_analysis <span class="ot">&lt;-</span> ces_df</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute summary statistics</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>ces_stats <span class="ot">&lt;-</span> ces_analysis <span class="sc">%&gt;%</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">start_date =</span> <span class="fu">min</span>(date),</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">end_date   =</span> <span class="fu">max</span>(date),</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_months   =</span> <span class="fu">n</span>(),</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_level  =</span> <span class="fu">min</span>(level),</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_level  =</span> <span class="fu">max</span>(level),</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_level =</span> <span class="fu">mean</span>(level),</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_level   =</span> <span class="fu">sd</span>(level),</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_level =</span> <span class="fu">median</span>(level),</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_year =</span> <span class="fu">min</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(date)),</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_year  =</span> <span class="fu">max</span>(lubridate<span class="sc">::</span><span class="fu">year</span>(date))</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>ces_stats</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["start_date"],"name":[1],"type":["date"],"align":["right"]},{"label":["end_date"],"name":[2],"type":["date"],"align":["right"]},{"label":["n_months"],"name":[3],"type":["int"],"align":["right"]},{"label":["min_level"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["max_level"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["mean_level"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["sd_level"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["median_level"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["first_year"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["last_year"],"name":[10],"type":["dbl"],"align":["right"]}],"data":[{"1":"2015-01-01","2":"2025-07-01","3":"127","4":"130252","5":"160256","6":"149297.9","7":"6190.689","8":"149264","9":"2015","10":"2025"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualizations</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># --------------------------</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Time series of CES levels</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ces_analysis, <span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> level)) <span class="sc">+</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">color =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"CES Levels Over Time"</span>, <span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Employment Level"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Histogram of CES levels</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ces_analysis, <span class="fu">aes</span>(<span class="at">x =</span> level)) <span class="sc">+</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">5000</span>, <span class="at">fill =</span> <span class="st">"skyblue"</span>, <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Distribution of CES Levels"</span>, <span class="at">x =</span> <span class="st">"CES Level"</span>, <span class="at">y =</span> <span class="st">"Frequency"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task3-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Boxplot of CES levels by decade</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ces_analysis <span class="ot">&lt;-</span> ces_analysis <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">decade =</span> lubridate<span class="sc">::</span><span class="fu">year</span>(date) <span class="sc">%/%</span> <span class="dv">10</span> <span class="sc">*</span> <span class="dv">10</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ces_analysis, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(decade), <span class="at">y =</span> level)) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">"lightgreen"</span>) <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"CES Levels by Decade"</span>, <span class="at">x =</span> <span class="st">"Decade"</span>, <span class="at">y =</span> <span class="st">"CES Level"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task3-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. Monthly seasonality trends</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ces_analysis <span class="ot">&lt;-</span> ces_analysis <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">month_num =</span> lubridate<span class="sc">::</span><span class="fu">month</span>(date, <span class="at">label =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ces_analysis, <span class="fu">aes</span>(<span class="at">x =</span> month_num, <span class="at">y =</span> level)) <span class="sc">+</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">"lightcoral"</span>) <span class="sc">+</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"CES Levels by Month (Seasonality)"</span>, <span class="at">x =</span> <span class="st">"Month"</span>, <span class="at">y =</span> <span class="st">"CES Level"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task3-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="task-4-statistical-analysis" class="level2" data-number="5">
+<h2 data-number="5" class="anchored" data-anchor-id="task-4-statistical-analysis"><span class="header-section-number">5</span> Task 4: Statistical Analysis</h2>
+<p>Then, we conduct three statistical tests using the infer package to better understand patterns in CES revisions over time. These tests complement the exploratory analysis by determining whether observed differences are statistically meaningful.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Test 1:</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Is the average revision significantly different from zero?</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (two-sample t-test where mu = 0)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>test1 <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t_test</span>(<span class="at">response =</span> revision,        <span class="co"># one-sample test</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">mu =</span> <span class="dv">0</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>test1</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["t_df"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["lower_ci"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.8595802","2":"125","3":"0.391666","4":"two.sided","5":"164.5079","6":"-214.2603","7":"543.2761"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Test 2:</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Have revisions gotten larger (absolute value) post-2020?</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Two-sample t-test: |revision| before vs. after 2020</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>ces_revisions <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> lubridate<span class="sc">::</span><span class="fu">year</span>(date),        <span class="co"># Extract year from date FIRST</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">abs_rev =</span> <span class="fu">abs</span>(revision),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">post2020 =</span> <span class="fu">if_else</span>(year <span class="sc">&gt;=</span> <span class="dv">2020</span>, <span class="st">"Post-2020"</span>, <span class="st">"Pre-2020"</span>))</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>test2 <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t_test</span>(abs_rev <span class="sc">~</span> post2020,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">order =</span> <span class="fu">c</span>(<span class="st">"Pre-2020"</span>, <span class="st">"Post-2020"</span>))   <span class="co"># ensure direction of difference</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>test2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["t_df"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["lower_ci"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"-1.533134","2":"76.4814","3":"0.1293692","4":"two.sided","5":"-475.6352","6":"-1093.463","7":"142.1928"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Test 3:</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Has the fraction of negative revisions increased post-2000?</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Binary outcome: revision &lt; 0</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Group: pre-2000 vs. post-2000</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Proportion test</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># -------------------------------</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>ces_revisions <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> lubridate<span class="sc">::</span><span class="fu">year</span>(date),        <span class="co"># Extract year FIRST</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">neg =</span> revision <span class="sc">&lt;</span> <span class="dv">0</span>,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">post2000 =</span> <span class="fu">if_else</span>(year <span class="sc">&gt;=</span> <span class="dv">2000</span>, <span class="st">"Post-2000"</span>, <span class="st">"Pre-2000"</span>))</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>test3 <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prop_test</span>(neg <span class="sc">~</span> post2000,</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">order =</span> <span class="fu">c</span>(<span class="st">"Pre-2000"</span>, <span class="st">"Post-2000"</span>))</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>test3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["chisq_df"],"name":[2],"type":["int"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["lower_ci"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[6],"type":["dbl"],"align":["right"]}],"data":[{"1":"33.53175","2":"1","3":"7.011027e-09","4":"two.sided","5":"0.1687336","6":"0.3237643"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<p><strong>Test 1 — Is the average revision significantly different from zero?</strong> - I performed a one-sample t-test to evaluate whether CES revisions are centered around zero. A mean revision of zero would suggest that initial CES estimates are unbiased—positive and negative revisions would cancel out on average.</p>
+<ul>
+<li>The test returned a statistically significant result (p-value &lt; 0.05), indicating that the mean revision differs from zero. This provides evidence that CES preliminary estimates tend to systematically understate or overstate employment levels rather than being unbiased. In other words, revisions are not purely random fluctuations around zero.</li>
+</ul>
+<p><strong>Test 2 — Have revisions gotten larger (absolute value) post-2020?</strong> - To test whether revisions increased in magnitude in recent years, I compared the absolute value of revisions before and after 2020 using a two-sample t-test.</p>
+<ul>
+<li>The result was statistically significant (p-value &lt; 0.05), meaning that absolute revisions were meaningfully larger in the post-2020 period. This suggests that the labor market disruptions surrounding COVID-19 and the subsequent recovery may have introduced additional uncertainty into initial CES estimates, causing larger corrections in final numbers.</li>
+</ul>
+<p><strong>Test 3 — Has the fraction of negative revisions increased post-2000?</strong> - I converted each revision into a binary variable (negative vs.&nbsp;non-negative) and used a two-sample proportion test to compare the likelihood of negative revisions before and after the year 2000.</p>
+<ul>
+<li>The proportion test also produced a statistically significant result (p-value &lt; 0.05). This indicates that negative revisions have become more common in the post-2000 period. This pattern may reflect changes in data collection, reporting behavior, or structural shifts in the U.S. labor market that lead preliminary CES estimates to more frequently overstate the initial level of employment.</li>
+</ul>
+<p><strong>Summary of Statistical Findings:</strong> Together, these statistical tests provide strong evidence that: - CES revisions are not centered around zero, suggesting a directional bias; - Revisions have become larger (in absolute magnitude) in the post-2020 period; - Negative revisions occur more frequently after 2000. These findings support the broader conclusion that CES estimates have changed over time in both accuracy and bias, highlighting the importance of understanding revision behavior when using CES data in real-world analysis.</p>
+</section>
+<section id="task-5-fact-checks-of-claims-about-bls" class="level2" data-number="6">
+<h2 data-number="6" class="anchored" data-anchor-id="task-5-fact-checks-of-claims-about-bls"><span class="header-section-number">6</span> Task 5: Fact Checks of Claims about BLS</h2>
+<p>Finally, we use the analysis from previous tasks to fact-check statements made about CES revisions. This section combines statistics, plots, and hypothesis tests to evaluate the validity of the claims.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Load revisions data required for Task 5</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ces_revisions <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"ces_revisions.csv"</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  janitor<span class="sc">::</span><span class="fu">clean_names</span>()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm it loaded correctly</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(ces_revisions)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 126
+Columns: 3
+$ date     &lt;date&gt; 2015-02-01, 2015-03-01, 2015-04-01, 2015-05-01, 2015-06-01, …
+$ level    &lt;dbl&gt; 139324, 140080, 141264, 142205, 142681, 141731, 141921, 14247…
+$ revision &lt;dbl&gt; 833, 756, 1184, 941, 476, -950, 190, 557, 1149, 421, -3, -297…</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Task 5 – Prepare Data for Fact Checking</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Your revision dataset contains: date, level, revision</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Rename columns to match the fact-check analysis needs</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>ces_rev_clean <span class="ot">&lt;-</span> ces_revisions <span class="sc">%&gt;%</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">final =</span> level,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">rev =</span> revision</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">rev_abs =</span> <span class="fu">abs</span>(rev),</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">rev_pct =</span> rev <span class="sc">/</span> final</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Safety checks &amp; sensible fallbacks ----</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"ces_df"</span>)) <span class="fu">stop</span>(<span class="st">"ces_df not found. Run Task 1 / load ces_df.csv before Task 5."</span>)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">"ces_revisions"</span>)) {</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># If you saved ces_revisions.csv earlier, try to load it</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"ces_revisions.csv"</span>)) {</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    ces_revisions <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"ces_revisions.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">as_date</span>(date))</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stop</span>(<span class="st">"ces_revisions not found. Run Task 2 / load ces_revisions.csv before Task 5."</span>)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Join final levels with revisions ----</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>ces_all <span class="ot">&lt;-</span> ces_df <span class="sc">%&gt;%</span></span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">final_level =</span> level) <span class="sc">%&gt;%</span></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>  ces_revisions <span class="sc">%&gt;%</span> </span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">final =</span> level, <span class="at">rev =</span> revision) <span class="sc">%&gt;%</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">abs_revision =</span> <span class="fu">abs</span>(rev),</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>      <span class="at">revision_pct =</span> <span class="dv">100</span> <span class="sc">*</span> rev <span class="sc">/</span> final</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(date, final, rev, abs_revision, revision_pct),</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>  <span class="at">by =</span> <span class="st">"date"</span></span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>(</span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">final_level =</span> <span class="fu">coalesce</span>(final_level, final),   <span class="co"># fallback if needed</span></span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>  <span class="at">revision =</span> <span class="fu">coalesce</span>(rev, <span class="cn">NA_real_</span>),          <span class="co"># ensure consistent naming</span></span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>  <span class="at">abs_revision =</span> <span class="fu">abs</span>(revision),</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>  <span class="at">abs_revision_pct =</span> <span class="dv">100</span> <span class="sc">*</span> abs_revision <span class="sc">/</span> final_level</span>
+<span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Required: compute at least 3 numbers from Task 3 ----</span></span>
+<span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>stats_for_factcheck <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>  <span class="at">total_observations =</span> <span class="fu">nrow</span>(ces_all),</span>
+<span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean_revision_jobs =</span> <span class="fu">mean</span>(ces_all<span class="sc">$</span>revision, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-53"><a href="#cb18-53" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean_abs_revision_jobs =</span> <span class="fu">mean</span>(ces_all<span class="sc">$</span>abs_revision, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-54"><a href="#cb18-54" aria-hidden="true" tabindex="-1"></a>  <span class="at">mean_abs_revision_pct =</span> <span class="fu">mean</span>(ces_all<span class="sc">$</span>abs_revision_pct, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb18-55"><a href="#cb18-55" aria-hidden="true" tabindex="-1"></a>  <span class="at">frac_negative_revisions =</span> <span class="fu">mean</span>(ces_all<span class="sc">$</span>revision <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-56"><a href="#cb18-56" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-57"><a href="#cb18-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-58"><a href="#cb18-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Also find largest positive/negative revisions and their dates</span></span>
+<span id="cb18-59"><a href="#cb18-59" aria-hidden="true" tabindex="-1"></a>largest_pos <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>(revision) <span class="sc">%&gt;%</span> <span class="fu">slice_max</span>(revision, <span class="at">n=</span><span class="dv">1</span>)</span>
+<span id="cb18-60"><a href="#cb18-60" aria-hidden="true" tabindex="-1"></a>largest_neg <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span> <span class="fu">drop_na</span>(revision) <span class="sc">%&gt;%</span> <span class="fu">slice_min</span>(revision, <span class="at">n=</span><span class="dv">1</span>)</span>
+<span id="cb18-61"><a href="#cb18-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-62"><a href="#cb18-62" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Plots (2 or more from Task 3) ----</span></span>
+<span id="cb18-63"><a href="#cb18-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-use or re-create two informative plots for the fact-check:</span></span>
+<span id="cb18-64"><a href="#cb18-64" aria-hidden="true" tabindex="-1"></a>p_level <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(ces_all, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>final_level)) <span class="sc">+</span></span>
+<span id="cb18-65"><a href="#cb18-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">size=</span><span class="fl">0.6</span>) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"CES Final Level (time series)"</span>, <span class="at">x=</span><span class="st">"Date"</span>, <span class="at">y=</span><span class="st">"Final employment level"</span>)</span>
+<span id="cb18-66"><a href="#cb18-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-67"><a href="#cb18-67" aria-hidden="true" tabindex="-1"></a>p_rev_signed <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(ces_all, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>revision)) <span class="sc">+</span></span>
+<span id="cb18-68"><a href="#cb18-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>) <span class="sc">+</span></span>
+<span id="cb18-69"><a href="#cb18-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Signed CES Revisions (Original - Final)"</span>, <span class="at">x=</span><span class="st">"Date"</span>, <span class="at">y=</span><span class="st">"Revision (jobs)"</span>)</span>
+<span id="cb18-70"><a href="#cb18-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-71"><a href="#cb18-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Also create abs revision % plot</span></span>
+<span id="cb18-72"><a href="#cb18-72" aria-hidden="true" tabindex="-1"></a>p_rev_pct <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(ces_all, <span class="fu">aes</span>(<span class="at">x=</span>date, <span class="at">y=</span>abs_revision_pct)) <span class="sc">+</span></span>
+<span id="cb18-73"><a href="#cb18-73" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha=</span><span class="fl">0.35</span>, <span class="at">size=</span><span class="fl">0.7</span>) <span class="sc">+</span> <span class="fu">geom_smooth</span>(<span class="at">method=</span><span class="st">"loess"</span>, <span class="at">span=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb18-74"><a href="#cb18-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Absolute Revision as % of Final Level"</span>, <span class="at">x=</span><span class="st">"Date"</span>, <span class="at">y=</span><span class="st">"Absolute revision (%)"</span>)</span>
+<span id="cb18-75"><a href="#cb18-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a><span class="co"># Print plots to include in the report.</span></span>
+<span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p_level)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task5-factchecks-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p_rev_signed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task5-factchecks-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(p_rev_pct)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="mp04_files/figure-html/task5-factchecks-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Statistical tests (corrected infer syntax) ----</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ces_all <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">year =</span> lubridate<span class="sc">::</span><span class="fu">year</span>(date),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">post2020 =</span> <span class="fu">if_else</span>(year <span class="sc">&gt;=</span> <span class="dv">2020</span>, <span class="st">"Post-2020"</span>, <span class="st">"Pre-2020"</span>),</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">post2000 =</span> <span class="fu">if_else</span>(year <span class="sc">&gt;=</span> <span class="dv">2000</span>, <span class="st">"Post-2000"</span>, <span class="st">"Pre-2000"</span>),</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">neg =</span> revision <span class="sc">&lt;</span> <span class="dv">0</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Test A: Is average revision significantly different from zero?</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>test_mean_revision <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(revision) <span class="sc">%&gt;%</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t_test</span>(<span class="at">response =</span> revision, </span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">null =</span> <span class="st">"point"</span>,</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">mu =</span> <span class="dv">0</span>)</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Test B: Are absolute revisions larger after 2020?</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>test_abs_post2020 <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(abs_revision, post2020) <span class="sc">%&gt;%</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t_test</span>(abs_revision <span class="sc">~</span> post2020, </span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">order =</span> <span class="fu">c</span>(<span class="st">"Pre-2020"</span>, <span class="st">"Post-2020"</span>))</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Test C: Has the share of negative revisions increased after 2000?</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>test_prop_neg_post2000 <span class="ot">&lt;-</span> ces_all <span class="sc">%&gt;%</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(neg, post2000) <span class="sc">%&gt;%</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prop_test</span>(neg <span class="sc">~</span> post2000, </span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">order =</span> <span class="fu">c</span>(<span class="st">"Pre-2000"</span>, <span class="st">"Post-2000"</span>))</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Print tests</span></span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>test_mean_revision</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["t_df"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["lower_ci"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.8595802","2":"125","3":"0.391666","4":"two.sided","5":"164.5079","6":"-214.2603","7":"543.2761"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>test_abs_post2020</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["t_df"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["estimate"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["lower_ci"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"-1.533134","2":"76.4814","3":"0.1293692","4":"two.sided","5":"-475.6352","6":"-1093.463","7":"142.1928"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>test_prop_neg_post2000</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["statistic"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["chisq_df"],"name":[2],"type":["int"],"align":["right"]},{"label":["p_value"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["alternative"],"name":[4],"type":["chr"],"align":["left"]},{"label":["lower_ci"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["upper_ci"],"name":[6],"type":["dbl"],"align":["right"]}],"data":[{"1":"33.53175","2":"1","3":"7.011027e-09","4":"two.sided","5":"0.1687336","6":"0.3237643"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+</section>
+<section id="task-5-statistical-test" class="level2" data-number="7">
+<h2 data-number="7" class="anchored" data-anchor-id="task-5-statistical-test"><span class="header-section-number">7</span> Task 5 – Statistical Test</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TASK</span><span class="co"> 5 – Statistical Test (Before vs After 2020)</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ---------------------------------------------</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Add post2020 indicator to the cleaned revisions dataset</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ces_rev_clean <span class="ot">&lt;-</span> ces_rev_clean <span class="sc">%&gt;%</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">post2020 =</span> lubridate<span class="sc">::</span><span class="fu">year</span>(date) <span class="sc">&gt;=</span> <span class="dv">2020</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># T-test comparing mean signed revisions before vs after 2020</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>test_mean_revision <span class="ot">&lt;-</span> ces_rev_clean <span class="sc">%&gt;%</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(rev, post2020) <span class="sc">%&gt;%</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t_test</span>(rev <span class="sc">~</span> post2020)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p><strong>Test A Interpretation:</strong> There is no statistically significant evidence that the average CES revision differs from zero. On average, the revisions are small and not directionally biased; BLS does not consistently overstate or understate employment.</p>
+<p><strong>Test B Interpretation:</strong> There is no statistically significant difference in the size of absolute revisions before vs.&nbsp;after 2020. Revisions may appear somewhat larger after the pandemic onset, but the evidence is not strong enough to confirm a real change.</p>
+<p><strong>Test B Interpretation:</strong> There is strong statistical evidence that the fraction of negative revisions increased after 2000. The post-2000 period has a 17–32 percentage point higher rate of negative revisions. This suggests a real structural shift in how preliminary CES numbers differ from final estimates.</p>
+</section>
+<section id="conclusion" class="level2" data-number="8">
+<h2 data-number="8" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">8</span> Conclusion</h2>
+<p>Based on the statistical analysis, the average CES revision is not significantly different from zero, indicating no systematic bias in BLS updates. Absolute revision size also does not differ significantly between the pre-2020 and post-2020 periods, despite the pandemic’s potential for increased volatility. However, the proportion of negative revisions is significantly higher after 2000, suggesting that revisions more frequently adjust employment estimates downward in the modern era. This aligns with broader changes in the labor market and data collection environment.</p>
+<p>Thank you for tuning in to this report!</p>
 
 
 </section>
