@@ -1,0 +1,436 @@
+---
+title: "STA9750_Group_Project: Kitchen Nightmares - SQ3 Analysis"
+author: "Caroline Guirand"
+editor:
+    mode: source
+format:
+    html:
+        theme:  solar # Change this to any theme below
+        code-fold: true
+        code-summary: "Show Code"
+        toc: true
+        toc-location: left
+        toc-depth: 3
+        toc-title: "Table Of Contents"
+        number-sections: true
+        number-depth: 3
+        smooth-scroll: true
+        link-external-newwindow: true
+        df-print: paged
+
+---
+
+# Do neighborhoods with poorer restaurant inspection grades tend to have more 311 food poisoning complaints?
+
+### Introduction and Motivation
+
+Food safety plays an important role in public health, particularly in dense urban environments like New York City, where residents tend to rely heavily on restaurants for daily meals. While restaurant inspection grades are designed to provide a standardized, regulatory assessment of food safety conditions, residents’ lived experiences of foodborne illness are often captured through informal reporting systems such as NYC’s 311 service requests. Understanding how these two signals relate to one another is essential for evaluating whether inspection outcomes meaningfully reflect community health risks.
+
+
+This individual report will addresses the specific question: **Do neighborhoods with poorer restaurant inspection grades tend to have higher numbers of 311 food poisoning complaints?** This question complements the project’s overarching question regarding how restaurant quality relates to community health across NYC neighborhoods because it centers on the relationship between official regulatory oversight and resident-reported food safety concerns.
+
+
+Instead of assuming that lower inspection grades should directly translate into more reported food poisoning incidents, this analysis treats that assumption as an empirical question. Inspection grades and complaint data are generated through very different processes, with different incentives, biases, and scopes. By comparing them at the neighborhood level, this analysis seeks to understand whether there is a correlation between the two, and if not, what that disconnect might imply for how food safety risks are measured and communicated.
+
+---
+
+### Data Sources and Relevance
+
+This analysis utilizes two primary datasets: NYC Department of Health and Mental Hygiene (DOHMH) restaurant inspection results and NYC 311 food poisoning service requests.
+
+The restaurant inspection dataset contains records of sanitary inspections conducted by the DOHMH across NYC. Each inspection results in a letter grade—A, B, or C—based on the number and severity of violations observed. These grades are highly visible to consumers and are intended to serve as a summary measure of restaurant cleanliness and food safety compliance.
+
+The 311 food poisoning dataset consists of service requests submitted by residents who believe they have experienced foodborne illness. These complaints are not confirmed diagnoses; instead, they reflect perceived incidents reported voluntarily by the public. While this introduces reporting bias and uncertainty, the dataset provides a valuable window into how residents experience and respond to food safety issues in their neighborhoods.
+
+Substantially, these two datasets represent distinct perspectives on food safety: one institutional and regulatory, the other experiential and community-driven. Comparing them allows for an assessment of whether regulatory signals align with public perceptions and reported outcomes.
+
+
+```{r}
+# ----------------------------
+# LOAD REQUIRED PACKAGES
+# ----------------------------
+
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(lubridate)
+```
+
+```{r}
+# ----------------------------
+# LOAD DATA
+# ----------------------------
+
+# Restaurant inspections dataset
+inspection_df <- read.csv("DOHMH_Restaurant_Inspection_Data.csv") %>%
+  clean_names()
+
+# 311 food poisoning complaints dataset
+complaints_df <- read.csv("311_Food_Poisoning_Data.csv") %>%
+  clean_names()
+```
+
+---
+
+### Data Cleaning, Preparation, and Aggregation
+
+**Neighborhood-Level Analysis**
+
+A key choice in this project was to conduct the analysis at the neighborhood level, rather than at the individual restaurant or complaint level. This decision was driven by both practical and conceptual considerations. First, 311 food poisoning complaints are rarely linked to specific restaurants in a reliable or standardized way. Second, the broader project emphasizes neighborhood-level community health, making aggregation a consistent unit of analysis across all of our specific questions.
+
+To enable this aggregation, restaurant ZIP codes were mapped to NYC neighborhood groupings using a shared ZIP-to-neighborhood code developed by Matthew and touched up by Tyler. This step was critical for aligning inspection data with complaint data and ensuring consistency with other project analyses. ZIP codes that could not be reliably mapped were excluded to avoid introducing ambiguous or misleading readings.
+
+```{r}
+# ----------------------------
+# STEP 1: ZIP → NEIGHBORHOOD MAPPING
+# (Using Matt & Tyler’s mapping definitions)
+# ----------------------------
+
+# Convert ZIP to numeric
+inspection_df$zipcode <- as.numeric(inspection_df$zipcode)
+
+# No need to rename the data frame — just use inspection_df
+inspection_df <- inspection_df %>%
+  mutate(
+    neighborhood_group = case_when(
+      zipcode %in% c(10031, 10032, 10033, 10034, 10040) ~ "Washington Heights and Inwood",
+      zipcode %in% c(10026, 10030, 10037, 10039) ~ "Central Harlem",
+      zipcode %in% c(10029, 10035) ~ "East Harlem",
+      zipcode %in% c(10023, 10024) ~ "Upper West Side",
+      zipcode %in% c(10021, 10028, 10044, 10065, 10075, 10128) ~ "Upper East Side",
+      zipcode %in% c(10001, 10011, 10018, 10019, 10020, 10036) ~ "Clinton and Chelsea",
+      zipcode %in% c(10010, 10016, 10017, 10022) ~ "Stuyvesant Town and Turtle Bay",
+      zipcode %in% c(10012, 10013, 10014) ~ "Greenwich Village and Soho",
+      zipcode %in% c(10002, 10003, 10009) ~ "Lower East Side and Chinatown",
+      zipcode %in% c(10004, 10005, 10006, 10007, 10038, 10280) ~ "Financial District",
+      zipcode %in% c(10025, 10027) ~ "Morningside Heights and Hamilton Heights",
+
+      zipcode %in% c(10301, 10302, 10303, 10304, 10305, 10310) ~ "St. George and Stapleton",
+      zipcode %in% c(10306, 10314) ~ "South Beach and Willowbrook",
+      zipcode %in% c(10307, 10308, 10309, 10312) ~ "Tottenville and Great Kills",
+
+      zipcode %in% c(10451, 10454, 10455, 10456, 10459) ~ "Mott Haven and Melrose",
+      zipcode %in% c(10474, 10475) ~ "Hunts Point and Longwood",
+      zipcode %in% c(10453, 10457, 10458, 10460) ~ "Morrisania and Crotona",
+      zipcode %in% c(10452, 10456, 10451) ~ "Highbridge and Concourse",
+      zipcode %in% c(10453, 10458, 10467, 10468) ~ "Fordham and University Heights",
+      zipcode %in% c(10457, 10458, 10461) ~ "Belmont and East Tremont",
+      zipcode %in% c(10463, 10471) ~ "Kingsbridge Heights and Bedford",
+      zipcode %in% c(10463, 10471) ~ "Riverdale and Fieldston",
+      zipcode %in% c(10462, 10473) ~ "Parkchester and Soundview",
+      zipcode %in% c(10461, 10465, 10472, 10473) ~ "Throgs Neck and Co-op City",
+      zipcode %in% c(10461, 10462) ~ "Morris Park and Bronxdale",
+      zipcode %in% c(10466, 10467, 10469) ~ "Williamsbridge and Baychester",
+
+      zipcode %in% c(11211, 11222) ~ "Greenpoint and Williamsburg",
+      zipcode %in% c(11201, 11205) ~ "Fort Greene and Brooklyn Heights",
+      zipcode %in% c(11206, 11216, 11221, 11233, 11238) ~ "Bedford Stuyvesant",
+      zipcode %in% c(11207, 11221, 11237) ~ "Bushwick",
+      zipcode %in% c(11207, 11208) ~ "East New York and Starrett City",
+      zipcode %in% c(11215, 11217, 11231) ~ "Park Slope and Carroll Gardens",
+      zipcode %in% c(11220, 11232) ~ "Sunset Park",
+      zipcode %in% c(11213, 11216, 11225, 11238) ~ "Crown Heights and Prospect Heights",
+      zipcode %in% c(11203, 11212) ~ "South Crown Heights and Lefferts Gardens",
+      zipcode %in% c(11209, 11220) ~ "Bay Ridge and Dyker Heights",
+      zipcode %in% c(11204, 11214, 11228) ~ "Bensonhurst",
+      zipcode %in% c(11204, 11218, 11219, 11230) ~ "Borough Park",
+      zipcode %in% c(11224) ~ "Coney Island",
+      zipcode %in% c(11203, 11210, 11226) ~ "Flatbush and Midwood",
+      zipcode %in% c(11235) ~ "Sheepshead Bay",
+      zipcode %in% c(11212, 11233) ~ "Brownsville",
+      zipcode %in% c(11203, 11226, 11230) ~ "East Flatbush",
+      zipcode %in% c(11236, 11234) ~ "Flatlands and Canarsie",
+
+      zipcode %in% c(11101, 11102, 11103, 11104, 11105, 11106, 11369, 11370, 11377) ~ "Long Island City and Astoria",
+      zipcode %in% c(11377, 11378, 11379) ~ "Woodside and Sunnyside",
+      zipcode %in% c(11372, 11373, 11374) ~ "Jackson Heights",
+      zipcode %in% c(11373, 11375, 11368) ~ "Elmhurst and Corona",
+      zipcode %in% c(11385, 11378) ~ "Ridgewood and Maspeth",
+      zipcode %in% c(11374, 11375, 11385) ~ "Rego Park and Forest Hills",
+      zipcode %in% c(11354, 11355, 11356, 11357, 11358) ~ "Flushing and Whitestone",
+      zipcode %in% c(11365, 11366, 11367) ~ "Hillcrest and Fresh Meadows",
+      zipcode %in% c(11415, 11416, 11421) ~ "Kew Gardens and Woodhaven",
+      zipcode %in% c(11417, 11419, 11420) ~ "South Ozone Park and Howard Beach",
+      zipcode %in% c(11360, 11361, 11362) ~ "Bayside and Little Neck",
+      zipcode %in% c(11412, 11423, 11432, 11433, 11434) ~ "Jamaica and Hollis",
+      zipcode %in% c(11427, 11428, 11429) ~ "Queens Village",
+      zipcode %in% c(11691, 11692, 11693, 11694, 11695) ~ "Rockaway and Broad Channel",
+
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+**Converting Inspection Grades to Numeric Form**
+
+Inspection grades are typically categorical (A, B, C), but to compute meaningful neighborhood-level averages, the grades were converted into a numeric scale (A = 1, B = 2, C = 3). This transformation allows for aggregation while preserving the ordinal structure of the grading system. It is important to note that the resulting neighborhood averages do not represent literal grades, but rather summary indicators of inspection quality. For example, an average grade of 1.3 indicates a neighborhood dominated by A grades with some B grades mixed in. This approach allowed for comparison across neighborhoods while maintaining general comprehension.
+
+
+```{r}
+# ----------------------------
+# STEP 2: CLEAN INSPECTION GRADES
+# ----------------------------
+
+inspection_clean <- inspection_df %>%
+  filter(!is.na(neighborhood_group)) %>%
+  filter(grade %in% c("A", "B", "C")) %>%
+  mutate(
+    grade_numeric = case_when(
+      grade == "A" ~ 1,
+      grade == "B" ~ 2,
+      grade == "C" ~ 3
+    )
+  )
+```
+
+```{r}
+# ----------------------------
+# STEP 3: AGGREGATE INSPECTION RESULTS
+# ----------------------------
+
+inspection_by_neighborhood <- inspection_clean %>%
+  group_by(neighborhood_group) %>%
+  summarise(
+    avg_grade = mean(grade_numeric, na.rm = TRUE),
+    n_restaurants = n()
+  )
+
+head(inspection_by_neighborhood)
+```
+
+```{r}
+# ----------------------------
+# STEP 4: CLEAN 311 COMPLAINTS DATA
+# ----------------------------
+
+complaints_df$incident_zip <- as.numeric(complaints_df$incident_zip)
+
+complaints_clean <- complaints_df %>%
+  filter(complaint_type == "Food Poisoning") %>%
+  left_join(
+    inspection_df %>%
+      select(zipcode, neighborhood_group) %>%
+      distinct(),
+    by = c("incident_zip" = "zipcode")
+  ) %>%
+  filter(!is.na(neighborhood_group))
+
+head(complaints_clean)
+```
+```{r}
+# Check that neighborhood_group was added
+colnames(complaints_clean)
+
+# Check how many ZIPs matched neighborhoods
+table(is.na(complaints_clean$neighborhood_group))
+
+# Preview key columns
+head(complaints_clean %>% select(incident_zip, neighborhood_group, created_date))
+
+```
+
+**Aggregating Complaints**
+For the 311 data, only complaints explicitly labeled as “Food Poisoning” were kept. Complaint ZIP codes were cleaned and matched to neighborhood groupings using the same mapping applied to the inspection data. Complaints were then counted per neighborhood to create a total number of food poisoning reports. This aggregation strategy prioritizes comparability and interpretability over granularity. Though it sacrifices restaurant-level precision, this does align with the project’s focus on community-level health patterns.
+
+```{r}
+# ----------------------------
+# STEP 5: AGGREGATE 311 COMPLAINTS
+# ----------------------------
+
+complaints_by_neighborhood <- complaints_clean %>%
+  group_by(neighborhood_group) %>%
+  summarise(n_complaints = n())
+
+head(complaints_by_neighborhood)
+```
+
+---
+
+### Exploratory Analysis and Analytical Approach
+
+Before conducting formal statistical tests, exploratory data analysis (EDA) was used to understand the distributions and scales of both inspection grades and complaint counts. This step revealed two important characteristics of the data:
+
+1. Inspection grades are heavily skewed toward A ratings across NYC. As a result, neighborhood average grades cluster tightly between approximately 1.2 and 1.5, as opposed to them spanning the full 1–3 range. This reflects the reality that most NYC restaurants receive A grades, and has important implications for interpreting visualizations and statistical results.
+2. Food poisoning complaints vary widely across neighborhoods, with some neighborhoods reporting hundreds or thousands of complaints and others reporting relatively few. This skewed distribution motivated the use of log-scaled visualizations to prevent extreme values from dominating the analysis.
+
+The primary analytical strategy for this question was correlation analysis, supplemented by regression-based visualizations. Pearson’s correlation coefficient was used to assess the linear association between average inspection grade and number of complaints. Understanding that correlation does not imply causation, this still provides a useful first-pass assessment of whether these two measures collaborate with one another together at the neighborhood level.
+
+```{r}
+# ----------------------------
+# STEP 6: MERGE DATASETS
+# ----------------------------
+
+sq3_df <- inspection_by_neighborhood %>%
+  left_join(complaints_by_neighborhood, by = "neighborhood_group") %>%
+  mutate(n_complaints = replace_na(n_complaints, 0))
+
+View(sq3_df)
+```
+
+```{r}
+# ----------------------------
+# STEP 7: CORRELATION ANALYSIS
+# ----------------------------
+
+cor_test_result <- cor.test(sq3_df$avg_grade, sq3_df$n_complaints)
+print(cor_test_result)
+```
+
+---
+
+### Results and Interpretation
+
+**Correlation Findings**
+
+The correlation analysis revealed no statistically significant relationship between the neighborhood average inspection grade and the number of 311 food poisoning complaints. The estimated correlation coefficient was small and slightly negative (-0.6615), and the associated p-value (0.6615) was well above typical significance thresholds.
+
+This suggests that neighborhoods with slightly worse inspection grades do not consistently experience higher numbers of food poisoning complaints. The lack of a strong relationship indicates that inspection outcomes and complaint volumes may be capturing different aspects of food safety risk.
+
+**Visualizations**
+
+```{r}
+# ----------------------------
+# STEP 8: SCATTERPLOT VISUALIZATION
+# ----------------------------
+
+ggplot(sq3_df, aes(x = avg_grade, y = n_complaints)) +
+  geom_point(size = 3) +
+  geom_smooth(method = "lm") +
+  scale_y_log10() +
+  labs(
+    title = "Inspection Grades vs 311 Complaints (Log Scale)",
+    x = "Average Inspection Grade",
+    y = "Number of Complaints (Log Scale)"
+  )
+```
+
+The scatterplot of average inspection grade versus complaint count illustrates the aforementioned finding visually. Points are widely dispersed, and the fitted regression line is nearly flat, reinforcing the absence of a meaningful trend. The use of a log scale on the y-axis ensures that both low- and high-complaint neighborhoods are visible without distortion.
+
+```{r}
+
+# ----------------------------
+#  STEP 9: BOXPLOT VISUALIZATION
+# ----------------------------
+
+sq3_df <- sq3_df %>%
+  mutate(grade_category = case_when(
+    avg_grade < 1.2 ~ "Mostly A",
+    avg_grade < 1.35 ~ "Mixed A/B",
+    TRUE ~ "More B/C"
+  ))
+
+ggplot(sq3_df, aes(x = grade_category, y = n_complaints)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(
+    title = "311 Complaints by Neighborhood Grade Category",
+    x = "Inspection Grade Category",
+    y = "Number of Food Poisoning Complaints"
+  )
+```
+
+This boxplot analysis grouped neighborhoods into inspection grade categories (predominantly A, mixed A/B, and more B/C). This visualization shows substantial overlap in complaint distributions across categories, further supporting the conclusion that inspection grade differences do not clearly separate neighborhoods by complaint volume.
+
+---
+
+### Discussion and Implications
+The absence of a strong relationship between inspection grades and food poisoning complaints does not imply that inspections are unimportant or ineffective, it simply highlights the complexity of measuring food safety outcomes.
+
+Several limitations help explain these findings:
+
+1. 311 food poisoning complaints are self-reported and unverified, meaning they may reflect awareness of these resources, trust in reporting systems, or population density rather than true incidence rates. 
+2. Inspection grades are assigned periodically and may not capture short-term lapses in food safety practices. 
+3. Neighborhood-level aggregation introduces the possibility of ecological inconsistencies, where individual-level relationships are obscured at higher levels of aggregation.
+4. Complaint volume is likely influenced by factors such as neighborhood population size, access to healthcare, and cultural norms around reporting, and these factors are not fully controlled for in this analysis.
+
+---
+
+### Contribution to the Overarching Question
+
+Despite these limitations, this analysis makes an important contribution to the overarching question of how restaurant quality relates to community health across NYC neighborhoods. While other project analyses identify relationships between economic stress, critical violations, and inspection outcomes, this analysis demonstrates that regulatory grades do not neatly translate into resident-reported food poisoning experiences.
+
+This finding adds nuance to the overall project narrative. It suggests that improving inspection outcomes alone may not be sufficient to reduce perceived or reported food safety issues and that community engagement, reporting behavior, and public awareness also play critical roles in shaping food safety outcomes.
+
+---
+
+### Future Directions
+
+Future work could strengthen this analysis by incorporating temporal alignment between inspections and complaints, adjusting complaint counts for population size or restaurant density, or linking complaints more directly to *confirmed* outbreaks. Additionally, qualitative research on reporting behavior could help explain why some neighborhoods generate more complaints than others, independent of inspection outcomes.
+
+---
+
+### Conclusion
+In summary, this analysis finds **no** strong evidence that neighborhoods with poorer restaurant inspection grades experience higher numbers of food poisoning complaints. Rather than undermining the value of inspections, this result highlights the multifaceted nature of food safety and community health. By comparing regulatory and resident-reported signals, this analysis underscores the importance of using multiple data sources to understand how food safety risks are experienced and perceived across NYC neighborhoods.
+
+
+---
+
+**Note: While not part of my specific question analysis, the following are some visualizations I created based on the 311 food poisoning data that I shared during our group project presentation. They simply showcase the number of complaints by borough and by zip code.**
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+# Load dataset
+df <- read.csv("311_Food_Poisoning_Data.csv") %>%
+  clean_names()
+
+# Filter to food poisoning complaints only
+df_fp <- df %>%
+  filter(complaint_type == "Food Poisoning") %>%
+  mutate(
+    incident_zip = as.numeric(incident_zip)
+  ) %>%
+  drop_na(incident_zip) %>%
+  mutate(incident_zip = as.integer(incident_zip))
+
+# Identify top 10 ZIP codes
+top_zip <- df_fp %>%
+  count(incident_zip, sort = TRUE) %>%
+  slice_head(n = 10) %>%
+  arrange(n)
+
+# Plot top ZIPs
+ggplot(top_zip, aes(x = n, y = factor(incident_zip))) +
+  geom_col() +
+  labs(
+    title = "Top 10 ZIP Codes by Food Poisoning Complaints",
+    x = "Number of Complaints",
+    y = "ZIP Code"
+  )
+```
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+# Load dataset
+df <- read.csv("311_Food_Poisoning_Data.csv") %>%
+  clean_names()
+
+# Filter to food poisoning complaints only
+df_fp <- df %>%
+  filter(complaint_type == "Food Poisoning")
+
+# Count complaints by borough
+borough_counts <- df_fp %>%
+  count(borough, sort = TRUE)
+
+# Preview counts
+borough_counts
+
+# Plot
+ggplot(borough_counts, aes(x = reorder(borough, -n), y = n)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "311 Food Poisoning Complaints by Borough",
+    x = "Borough",
+    y = "Number of Complaints"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
