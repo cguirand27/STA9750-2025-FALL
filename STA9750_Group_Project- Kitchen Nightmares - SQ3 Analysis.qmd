@@ -264,7 +264,7 @@ sq3_df <- inspection_by_neighborhood %>%
   left_join(complaints_by_neighborhood, by = "neighborhood_group") %>%
   mutate(n_complaints = replace_na(n_complaints, 0))
 
-View(sq3_df)
+glimpse(sq3_df)
 ```
 
 ```{r}

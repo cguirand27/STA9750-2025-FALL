@@ -21,6 +21,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -70,6 +105,8 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 <style>html{ scroll-behavior: smooth; }</style>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
 
 
 </head>
@@ -103,6 +140,14 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#do-neighborhoods-with-poorer-restaurant-inspection-grades-tend-to-have-more-311-food-poisoning-complaints" id="toc-do-neighborhoods-with-poorer-restaurant-inspection-grades-tend-to-have-more-311-food-poisoning-complaints" class="nav-link active" data-scroll-target="#do-neighborhoods-with-poorer-restaurant-inspection-grades-tend-to-have-more-311-food-poisoning-complaints"><span class="header-section-number">1</span> Do neighborhoods with poorer restaurant inspection grades tend to have more 311 food poisoning complaints?</a>
   <ul class="collapse">
   <li><a href="#introduction-and-motivation" id="toc-introduction-and-motivation" class="nav-link" data-scroll-target="#introduction-and-motivation"><span class="header-section-number">1.0.1</span> Introduction and Motivation</a></li>
+  <li><a href="#data-sources-and-relevance" id="toc-data-sources-and-relevance" class="nav-link" data-scroll-target="#data-sources-and-relevance"><span class="header-section-number">1.0.2</span> Data Sources and Relevance</a></li>
+  <li><a href="#data-cleaning-preparation-and-aggregation" id="toc-data-cleaning-preparation-and-aggregation" class="nav-link" data-scroll-target="#data-cleaning-preparation-and-aggregation"><span class="header-section-number">1.0.3</span> Data Cleaning, Preparation, and Aggregation</a></li>
+  <li><a href="#exploratory-analysis-and-analytical-approach" id="toc-exploratory-analysis-and-analytical-approach" class="nav-link" data-scroll-target="#exploratory-analysis-and-analytical-approach"><span class="header-section-number">1.0.4</span> Exploratory Analysis and Analytical Approach</a></li>
+  <li><a href="#results-and-interpretation" id="toc-results-and-interpretation" class="nav-link" data-scroll-target="#results-and-interpretation"><span class="header-section-number">1.0.5</span> Results and Interpretation</a></li>
+  <li><a href="#discussion-and-implications" id="toc-discussion-and-implications" class="nav-link" data-scroll-target="#discussion-and-implications"><span class="header-section-number">1.0.6</span> Discussion and Implications</a></li>
+  <li><a href="#contribution-to-the-overarching-question" id="toc-contribution-to-the-overarching-question" class="nav-link" data-scroll-target="#contribution-to-the-overarching-question"><span class="header-section-number">1.0.7</span> Contribution to the Overarching Question</a></li>
+  <li><a href="#future-directions" id="toc-future-directions" class="nav-link" data-scroll-target="#future-directions"><span class="header-section-number">1.0.8</span> Future Directions</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">1.0.9</span> Conclusion</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -146,6 +191,572 @@ ul.task-list li input[type="checkbox"] {
 <p>Food safety plays an important role in public health, particularly in dense urban environments like New York City, where residents tend to rely heavily on restaurants for daily meals. While restaurant inspection grades are designed to provide a standardized, regulatory assessment of food safety conditions, residents’ lived experiences of foodborne illness are often captured through informal reporting systems such as NYC’s 311 service requests. Understanding how these two signals relate to one another is essential for evaluating whether inspection outcomes meaningfully reflect community health risks.</p>
 <p>This individual report will addresses the specific question: <strong>Do neighborhoods with poorer restaurant inspection grades tend to have higher numbers of 311 food poisoning complaints?</strong> This question complements the project’s overarching question regarding how restaurant quality relates to community health across NYC neighborhoods because it centers on the relationship between official regulatory oversight and resident-reported food safety concerns.</p>
 <p>Instead of assuming that lower inspection grades should directly translate into more reported food poisoning incidents, this analysis treats that assumption as an empirical question. Inspection grades and complaint data are generated through very different processes, with different incentives, biases, and scopes. By comparing them at the neighborhood level, this analysis seeks to understand whether there is a correlation between the two, and if not, what that disconnect might imply for how food safety risks are measured and communicated.</p>
+<hr>
+</section>
+<section id="data-sources-and-relevance" class="level3" data-number="1.0.2">
+<h3 data-number="1.0.2" class="anchored" data-anchor-id="data-sources-and-relevance"><span class="header-section-number">1.0.2</span> Data Sources and Relevance</h3>
+<p>This analysis utilizes two primary datasets: NYC Department of Health and Mental Hygiene (DOHMH) restaurant inspection results and NYC 311 food poisoning service requests.</p>
+<p>The restaurant inspection dataset contains records of sanitary inspections conducted by the DOHMH across NYC. Each inspection results in a letter grade—A, B, or C—based on the number and severity of violations observed. These grades are highly visible to consumers and are intended to serve as a summary measure of restaurant cleanliness and food safety compliance.</p>
+<p>The 311 food poisoning dataset consists of service requests submitted by residents who believe they have experienced foodborne illness. These complaints are not confirmed diagnoses; instead, they reflect perceived incidents reported voluntarily by the public. While this introduces reporting bias and uncertainty, the dataset provides a valuable window into how residents experience and respond to food safety issues in their neighborhoods.</p>
+<p>Substantially, these two datasets represent distinct perspectives on food safety: one institutional and regulatory, the other experiential and community-driven. Comparing them allows for an assessment of whether regulatory signals align with public perceptions and reported outcomes.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># LOAD REQUIRED PACKAGES</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.5
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.5.2     ✔ tibble    3.3.0
+✔ lubridate 1.9.4     ✔ tidyr     1.3.1
+✔ purrr     1.1.0     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'janitor'
+
+The following objects are masked from 'package:stats':
+
+    chisq.test, fisher.test</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># LOAD DATA</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Restaurant inspections dataset</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>inspection_df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"DOHMH_Restaurant_Inspection_Data.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>()</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 311 food poisoning complaints dataset</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>complaints_df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"311_Food_Poisoning_Data.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="data-cleaning-preparation-and-aggregation" class="level3" data-number="1.0.3">
+<h3 data-number="1.0.3" class="anchored" data-anchor-id="data-cleaning-preparation-and-aggregation"><span class="header-section-number">1.0.3</span> Data Cleaning, Preparation, and Aggregation</h3>
+<p><strong>Neighborhood-Level Analysis</strong></p>
+<p>A key choice in this project was to conduct the analysis at the neighborhood level, rather than at the individual restaurant or complaint level. This decision was driven by both practical and conceptual considerations. First, 311 food poisoning complaints are rarely linked to specific restaurants in a reliable or standardized way. Second, the broader project emphasizes neighborhood-level community health, making aggregation a consistent unit of analysis across all of our specific questions.</p>
+<p>To enable this aggregation, restaurant ZIP codes were mapped to NYC neighborhood groupings using a shared ZIP-to-neighborhood code developed by Matthew and touched up by Tyler. This step was critical for aligning inspection data with complaint data and ensuring consistency with other project analyses. ZIP codes that could not be reliably mapped were excluded to avoid introducing ambiguous or misleading readings.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 1: ZIP → NEIGHBORHOOD MAPPING</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># (Using Matt &amp; Tyler’s mapping definitions)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert ZIP to numeric</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>inspection_df<span class="sc">$</span>zipcode <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(inspection_df<span class="sc">$</span>zipcode)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># No need to rename the data frame — just use inspection_df</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>inspection_df <span class="ot">&lt;-</span> inspection_df <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">neighborhood_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10031</span>, <span class="dv">10032</span>, <span class="dv">10033</span>, <span class="dv">10034</span>, <span class="dv">10040</span>) <span class="sc">~</span> <span class="st">"Washington Heights and Inwood"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10026</span>, <span class="dv">10030</span>, <span class="dv">10037</span>, <span class="dv">10039</span>) <span class="sc">~</span> <span class="st">"Central Harlem"</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10029</span>, <span class="dv">10035</span>) <span class="sc">~</span> <span class="st">"East Harlem"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10023</span>, <span class="dv">10024</span>) <span class="sc">~</span> <span class="st">"Upper West Side"</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10021</span>, <span class="dv">10028</span>, <span class="dv">10044</span>, <span class="dv">10065</span>, <span class="dv">10075</span>, <span class="dv">10128</span>) <span class="sc">~</span> <span class="st">"Upper East Side"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10001</span>, <span class="dv">10011</span>, <span class="dv">10018</span>, <span class="dv">10019</span>, <span class="dv">10020</span>, <span class="dv">10036</span>) <span class="sc">~</span> <span class="st">"Clinton and Chelsea"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10010</span>, <span class="dv">10016</span>, <span class="dv">10017</span>, <span class="dv">10022</span>) <span class="sc">~</span> <span class="st">"Stuyvesant Town and Turtle Bay"</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10012</span>, <span class="dv">10013</span>, <span class="dv">10014</span>) <span class="sc">~</span> <span class="st">"Greenwich Village and Soho"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10002</span>, <span class="dv">10003</span>, <span class="dv">10009</span>) <span class="sc">~</span> <span class="st">"Lower East Side and Chinatown"</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10004</span>, <span class="dv">10005</span>, <span class="dv">10006</span>, <span class="dv">10007</span>, <span class="dv">10038</span>, <span class="dv">10280</span>) <span class="sc">~</span> <span class="st">"Financial District"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10025</span>, <span class="dv">10027</span>) <span class="sc">~</span> <span class="st">"Morningside Heights and Hamilton Heights"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10301</span>, <span class="dv">10302</span>, <span class="dv">10303</span>, <span class="dv">10304</span>, <span class="dv">10305</span>, <span class="dv">10310</span>) <span class="sc">~</span> <span class="st">"St. George and Stapleton"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10306</span>, <span class="dv">10314</span>) <span class="sc">~</span> <span class="st">"South Beach and Willowbrook"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10307</span>, <span class="dv">10308</span>, <span class="dv">10309</span>, <span class="dv">10312</span>) <span class="sc">~</span> <span class="st">"Tottenville and Great Kills"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10451</span>, <span class="dv">10454</span>, <span class="dv">10455</span>, <span class="dv">10456</span>, <span class="dv">10459</span>) <span class="sc">~</span> <span class="st">"Mott Haven and Melrose"</span>,</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10474</span>, <span class="dv">10475</span>) <span class="sc">~</span> <span class="st">"Hunts Point and Longwood"</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10453</span>, <span class="dv">10457</span>, <span class="dv">10458</span>, <span class="dv">10460</span>) <span class="sc">~</span> <span class="st">"Morrisania and Crotona"</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10452</span>, <span class="dv">10456</span>, <span class="dv">10451</span>) <span class="sc">~</span> <span class="st">"Highbridge and Concourse"</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10453</span>, <span class="dv">10458</span>, <span class="dv">10467</span>, <span class="dv">10468</span>) <span class="sc">~</span> <span class="st">"Fordham and University Heights"</span>,</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10457</span>, <span class="dv">10458</span>, <span class="dv">10461</span>) <span class="sc">~</span> <span class="st">"Belmont and East Tremont"</span>,</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10463</span>, <span class="dv">10471</span>) <span class="sc">~</span> <span class="st">"Kingsbridge Heights and Bedford"</span>,</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10463</span>, <span class="dv">10471</span>) <span class="sc">~</span> <span class="st">"Riverdale and Fieldston"</span>,</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10462</span>, <span class="dv">10473</span>) <span class="sc">~</span> <span class="st">"Parkchester and Soundview"</span>,</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10461</span>, <span class="dv">10465</span>, <span class="dv">10472</span>, <span class="dv">10473</span>) <span class="sc">~</span> <span class="st">"Throgs Neck and Co-op City"</span>,</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10461</span>, <span class="dv">10462</span>) <span class="sc">~</span> <span class="st">"Morris Park and Bronxdale"</span>,</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">10466</span>, <span class="dv">10467</span>, <span class="dv">10469</span>) <span class="sc">~</span> <span class="st">"Williamsbridge and Baychester"</span>,</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11211</span>, <span class="dv">11222</span>) <span class="sc">~</span> <span class="st">"Greenpoint and Williamsburg"</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11201</span>, <span class="dv">11205</span>) <span class="sc">~</span> <span class="st">"Fort Greene and Brooklyn Heights"</span>,</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11206</span>, <span class="dv">11216</span>, <span class="dv">11221</span>, <span class="dv">11233</span>, <span class="dv">11238</span>) <span class="sc">~</span> <span class="st">"Bedford Stuyvesant"</span>,</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11207</span>, <span class="dv">11221</span>, <span class="dv">11237</span>) <span class="sc">~</span> <span class="st">"Bushwick"</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11207</span>, <span class="dv">11208</span>) <span class="sc">~</span> <span class="st">"East New York and Starrett City"</span>,</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11215</span>, <span class="dv">11217</span>, <span class="dv">11231</span>) <span class="sc">~</span> <span class="st">"Park Slope and Carroll Gardens"</span>,</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11220</span>, <span class="dv">11232</span>) <span class="sc">~</span> <span class="st">"Sunset Park"</span>,</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11213</span>, <span class="dv">11216</span>, <span class="dv">11225</span>, <span class="dv">11238</span>) <span class="sc">~</span> <span class="st">"Crown Heights and Prospect Heights"</span>,</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11203</span>, <span class="dv">11212</span>) <span class="sc">~</span> <span class="st">"South Crown Heights and Lefferts Gardens"</span>,</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11209</span>, <span class="dv">11220</span>) <span class="sc">~</span> <span class="st">"Bay Ridge and Dyker Heights"</span>,</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11204</span>, <span class="dv">11214</span>, <span class="dv">11228</span>) <span class="sc">~</span> <span class="st">"Bensonhurst"</span>,</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11204</span>, <span class="dv">11218</span>, <span class="dv">11219</span>, <span class="dv">11230</span>) <span class="sc">~</span> <span class="st">"Borough Park"</span>,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11224</span>) <span class="sc">~</span> <span class="st">"Coney Island"</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11203</span>, <span class="dv">11210</span>, <span class="dv">11226</span>) <span class="sc">~</span> <span class="st">"Flatbush and Midwood"</span>,</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11235</span>) <span class="sc">~</span> <span class="st">"Sheepshead Bay"</span>,</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11212</span>, <span class="dv">11233</span>) <span class="sc">~</span> <span class="st">"Brownsville"</span>,</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11203</span>, <span class="dv">11226</span>, <span class="dv">11230</span>) <span class="sc">~</span> <span class="st">"East Flatbush"</span>,</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11236</span>, <span class="dv">11234</span>) <span class="sc">~</span> <span class="st">"Flatlands and Canarsie"</span>,</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11101</span>, <span class="dv">11102</span>, <span class="dv">11103</span>, <span class="dv">11104</span>, <span class="dv">11105</span>, <span class="dv">11106</span>, <span class="dv">11369</span>, <span class="dv">11370</span>, <span class="dv">11377</span>) <span class="sc">~</span> <span class="st">"Long Island City and Astoria"</span>,</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11377</span>, <span class="dv">11378</span>, <span class="dv">11379</span>) <span class="sc">~</span> <span class="st">"Woodside and Sunnyside"</span>,</span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11372</span>, <span class="dv">11373</span>, <span class="dv">11374</span>) <span class="sc">~</span> <span class="st">"Jackson Heights"</span>,</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11373</span>, <span class="dv">11375</span>, <span class="dv">11368</span>) <span class="sc">~</span> <span class="st">"Elmhurst and Corona"</span>,</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11385</span>, <span class="dv">11378</span>) <span class="sc">~</span> <span class="st">"Ridgewood and Maspeth"</span>,</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11374</span>, <span class="dv">11375</span>, <span class="dv">11385</span>) <span class="sc">~</span> <span class="st">"Rego Park and Forest Hills"</span>,</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11354</span>, <span class="dv">11355</span>, <span class="dv">11356</span>, <span class="dv">11357</span>, <span class="dv">11358</span>) <span class="sc">~</span> <span class="st">"Flushing and Whitestone"</span>,</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11365</span>, <span class="dv">11366</span>, <span class="dv">11367</span>) <span class="sc">~</span> <span class="st">"Hillcrest and Fresh Meadows"</span>,</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11415</span>, <span class="dv">11416</span>, <span class="dv">11421</span>) <span class="sc">~</span> <span class="st">"Kew Gardens and Woodhaven"</span>,</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11417</span>, <span class="dv">11419</span>, <span class="dv">11420</span>) <span class="sc">~</span> <span class="st">"South Ozone Park and Howard Beach"</span>,</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11360</span>, <span class="dv">11361</span>, <span class="dv">11362</span>) <span class="sc">~</span> <span class="st">"Bayside and Little Neck"</span>,</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11412</span>, <span class="dv">11423</span>, <span class="dv">11432</span>, <span class="dv">11433</span>, <span class="dv">11434</span>) <span class="sc">~</span> <span class="st">"Jamaica and Hollis"</span>,</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11427</span>, <span class="dv">11428</span>, <span class="dv">11429</span>) <span class="sc">~</span> <span class="st">"Queens Village"</span>,</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>      zipcode <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">11691</span>, <span class="dv">11692</span>, <span class="dv">11693</span>, <span class="dv">11694</span>, <span class="dv">11695</span>) <span class="sc">~</span> <span class="st">"Rockaway and Broad Channel"</span>,</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA_character_</span></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p><strong>Converting Inspection Grades to Numeric Form</strong></p>
+<p>Inspection grades are typically categorical (A, B, C), but to compute meaningful neighborhood-level averages, the grades were converted into a numeric scale (A = 1, B = 2, C = 3). This transformation allows for aggregation while preserving the ordinal structure of the grading system. It is important to note that the resulting neighborhood averages do not represent literal grades, but rather summary indicators of inspection quality. For example, an average grade of 1.3 indicates a neighborhood dominated by A grades with some B grades mixed in. This approach allowed for comparison across neighborhoods while maintaining general comprehension.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 2: CLEAN INSPECTION GRADES</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>inspection_clean <span class="ot">&lt;-</span> inspection_df <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(neighborhood_group)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(grade <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">grade_numeric =</span> <span class="fu">case_when</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      grade <span class="sc">==</span> <span class="st">"A"</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      grade <span class="sc">==</span> <span class="st">"B"</span> <span class="sc">~</span> <span class="dv">2</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      grade <span class="sc">==</span> <span class="st">"C"</span> <span class="sc">~</span> <span class="dv">3</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 3: AGGREGATE INSPECTION RESULTS</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>inspection_by_neighborhood <span class="ot">&lt;-</span> inspection_clean <span class="sc">%&gt;%</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(neighborhood_group) <span class="sc">%&gt;%</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg_grade =</span> <span class="fu">mean</span>(grade_numeric, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_restaurants =</span> <span class="fu">n</span>()</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(inspection_by_neighborhood)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["neighborhood_group"],"name":[1],"type":["chr"],"align":["left"]},{"label":["avg_grade"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["n_restaurants"],"name":[3],"type":["int"],"align":["right"]}],"data":[{"1":"Bay Ridge and Dyker Heights","2":"1.294118","3":"1326"},{"1":"Bayside and Little Neck","2":"1.324045","3":"969"},{"1":"Bedford Stuyvesant","2":"1.330406","3":"3871"},{"1":"Belmont and East Tremont","2":"1.350185","3":"811"},{"1":"Bensonhurst","2":"1.418893","3":"2096"},{"1":"Borough Park","2":"1.424225","3":"1742"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 4: CLEAN 311 COMPLAINTS DATA</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>complaints_df<span class="sc">$</span>incident_zip <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(complaints_df<span class="sc">$</span>incident_zip)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>complaints_clean <span class="ot">&lt;-</span> complaints_df <span class="sc">%&gt;%</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(complaint_type <span class="sc">==</span> <span class="st">"Food Poisoning"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    inspection_df <span class="sc">%&gt;%</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(zipcode, neighborhood_group) <span class="sc">%&gt;%</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">distinct</span>(),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"incident_zip"</span> <span class="ot">=</span> <span class="st">"zipcode"</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(neighborhood_group))</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(complaints_clean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["unique_key"],"name":[1],"type":["int"],"align":["right"]},{"label":["created_date"],"name":[2],"type":["chr"],"align":["left"]},{"label":["closed_date"],"name":[3],"type":["chr"],"align":["left"]},{"label":["agency"],"name":[4],"type":["chr"],"align":["left"]},{"label":["agency_name"],"name":[5],"type":["chr"],"align":["left"]},{"label":["complaint_type"],"name":[6],"type":["chr"],"align":["left"]},{"label":["descriptor"],"name":[7],"type":["chr"],"align":["left"]},{"label":["location_type"],"name":[8],"type":["chr"],"align":["left"]},{"label":["incident_zip"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["incident_address"],"name":[10],"type":["chr"],"align":["left"]},{"label":["street_name"],"name":[11],"type":["chr"],"align":["left"]},{"label":["cross_street_1"],"name":[12],"type":["chr"],"align":["left"]},{"label":["cross_street_2"],"name":[13],"type":["chr"],"align":["left"]},{"label":["intersection_street_1"],"name":[14],"type":["chr"],"align":["left"]},{"label":["intersection_street_2"],"name":[15],"type":["chr"],"align":["left"]},{"label":["address_type"],"name":[16],"type":["chr"],"align":["left"]},{"label":["city"],"name":[17],"type":["chr"],"align":["left"]},{"label":["landmark"],"name":[18],"type":["chr"],"align":["left"]},{"label":["facility_type"],"name":[19],"type":["chr"],"align":["left"]},{"label":["status"],"name":[20],"type":["chr"],"align":["left"]},{"label":["due_date"],"name":[21],"type":["chr"],"align":["left"]},{"label":["resolution_action_updated_date"],"name":[22],"type":["chr"],"align":["left"]},{"label":["community_board"],"name":[23],"type":["chr"],"align":["left"]},{"label":["borough"],"name":[24],"type":["chr"],"align":["left"]},{"label":["x_coordinate_state_plane"],"name":[25],"type":["chr"],"align":["left"]},{"label":["y_coordinate_state_plane"],"name":[26],"type":["chr"],"align":["left"]},{"label":["park_facility_name"],"name":[27],"type":["chr"],"align":["left"]},{"label":["park_borough"],"name":[28],"type":["chr"],"align":["left"]},{"label":["vehicle_type"],"name":[29],"type":["lgl"],"align":["right"]},{"label":["taxi_company_borough"],"name":[30],"type":["lgl"],"align":["right"]},{"label":["taxi_pick_up_location"],"name":[31],"type":["lgl"],"align":["right"]},{"label":["bridge_highway_name"],"name":[32],"type":["lgl"],"align":["right"]},{"label":["bridge_highway_direction"],"name":[33],"type":["lgl"],"align":["right"]},{"label":["road_ramp"],"name":[34],"type":["lgl"],"align":["right"]},{"label":["bridge_highway_segment"],"name":[35],"type":["lgl"],"align":["right"]},{"label":["latitude"],"name":[36],"type":["dbl"],"align":["right"]},{"label":["longitude"],"name":[37],"type":["dbl"],"align":["right"]},{"label":["location"],"name":[38],"type":["chr"],"align":["left"]},{"label":["neighborhood_group"],"name":[39],"type":["chr"],"align":["left"]}],"data":[{"1":"66703737","2":"2025 Nov 02 11:31:16 PM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"1 or 2","8":"Restaurant/Bar/Deli/Bakery","9":"10002","10":"134 ELDRIDGE STREET","11":"ELDRIDGE STREET","12":"BROOME STREET","13":"DELANCEY STREET","14":"BROOME STREET","15":"DELANCEY STREET","16":"ADDRESS","17":"NEW YORK","18":"ELDRIDGE STREET","19":"","20":"In Progress","21":"","22":"","23":"03 MANHATTAN","24":"MANHATTAN","25":"986,588.","26":"201,196.","27":"Unspecified","28":"MANHATTAN","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.71891","37":"-73.99157","38":"POINT (-73.99156572246149 40.7189129617464)","39":"Lower East Side and Chinatown","_rn_":"1"},{"1":"66702607","2":"2025 Nov 02 03:42:11 PM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"3 or More","8":"Food Cart Vendor","9":"11372","10":"83-02 NORTHERN BOULEVARD","11":"NORTHERN BOULEVARD","12":"83 STREET","13":"84 STREET","14":"83 STREET","15":"84 STREET","16":"ADDRESS","17":"JACKSON HEIGHTS","18":"NORTHERN BOULEVARD","19":"","20":"In Progress","21":"","22":"","23":"03 QUEENS","24":"QUEENS","25":"1,016,309.","26":"214,607.","27":"Unspecified","28":"QUEENS","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.75567","37":"-73.88428","38":"POINT (-73.88428410257377 40.755665027383024)","39":"Jackson Heights","_rn_":"2"},{"1":"66698187","2":"2025 Nov 02 02:13:18 PM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"3 or More","8":"Restaurant/Bar/Deli/Bakery","9":"10024","10":"519 COLUMBUS AVENUE","11":"COLUMBUS AVENUE","12":"WEST   85 STREET","13":"WEST   86 STREET","14":"WEST   85 STREET","15":"WEST   86 STREET","16":"ADDRESS","17":"NEW YORK","18":"COLUMBUS AVENUE","19":"","20":"In Progress","21":"","22":"","23":"07 MANHATTAN","24":"MANHATTAN","25":"991,841.","26":"225,604.","27":"Unspecified","28":"MANHATTAN","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.78590","37":"-73.97259","38":"POINT (-73.97258810089549 40.785903785020274)","39":"Upper West Side","_rn_":"3"},{"1":"66702606","2":"2025 Nov 02 11:14:13 AM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"1 or 2","8":"Restaurant/Bar/Deli/Bakery","9":"10011","10":"60 WEST    8 STREET","11":"WEST    8 STREET","12":"MAC DOUGAL STREET","13":"AVENUE OF THE AMERICAS","14":"MAC DOUGAL STREET","15":"AVENUE OF THE AMERICAS","16":"ADDRESS","17":"NEW YORK","18":"WEST    8 STREET","19":"","20":"In Progress","21":"","22":"","23":"02 MANHATTAN","24":"MANHATTAN","25":"984,543.","26":"206,452.","27":"Unspecified","28":"MANHATTAN","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.73334","37":"-73.99894","38":"POINT (-73.99894278085715 40.733339707769105)","39":"Clinton and Chelsea","_rn_":"4"},{"1":"66703736","2":"2025 Nov 02 10:01:16 AM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"1 or 2","8":"Restaurant/Bar/Deli/Bakery","9":"10019","10":"830 9 AVENUE","11":"9 AVENUE","12":"WEST   54 STREET","13":"WEST   55 STREET","14":"WEST   54 STREET","15":"WEST   55 STREET","16":"ADDRESS","17":"NEW YORK","18":"9 AVENUE","19":"","20":"In Progress","21":"","22":"","23":"04 MANHATTAN","24":"MANHATTAN","25":"987,886.","26":"218,465.","27":"Unspecified","28":"MANHATTAN","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.76631","37":"-73.98687","38":"POINT (-73.98687388437517 40.76631161914486)","39":"Clinton and Chelsea","_rn_":"5"},{"1":"66697112","2":"2025 Nov 01 06:51:12 PM","3":"","4":"DOHMH","5":"Department of Health and Mental Hygiene","6":"Food Poisoning","7":"1 or 2","8":"Restaurant/Bar/Deli/Bakery","9":"11432","10":"185-18 HILLSIDE AVENUE","11":"HILLSIDE AVENUE","12":"184 PLACE","13":"186 STREET","14":"184 PLACE","15":"186 STREET","16":"ADDRESS","17":"JAMAICA","18":"HILLSIDE AVENUE","19":"","20":"In Progress","21":"","22":"","23":"12 QUEENS","24":"QUEENS","25":"1,046,109.","26":"199,600.","27":"Unspecified","28":"QUEENS","29":"NA","30":"NA","31":"NA","32":"NA","33":"NA","34":"NA","35":"NA","36":"40.71432","37":"-73.77686","38":"POINT (-73.77686032618173 40.71431637923069)","39":"Jamaica and Hollis","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that neighborhood_group was added</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(complaints_clean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "unique_key"                     "created_date"                  
+ [3] "closed_date"                    "agency"                        
+ [5] "agency_name"                    "complaint_type"                
+ [7] "descriptor"                     "location_type"                 
+ [9] "incident_zip"                   "incident_address"              
+[11] "street_name"                    "cross_street_1"                
+[13] "cross_street_2"                 "intersection_street_1"         
+[15] "intersection_street_2"          "address_type"                  
+[17] "city"                           "landmark"                      
+[19] "facility_type"                  "status"                        
+[21] "due_date"                       "resolution_action_updated_date"
+[23] "community_board"                "borough"                       
+[25] "x_coordinate_state_plane"       "y_coordinate_state_plane"      
+[27] "park_facility_name"             "park_borough"                  
+[29] "vehicle_type"                   "taxi_company_borough"          
+[31] "taxi_pick_up_location"          "bridge_highway_name"           
+[33] "bridge_highway_direction"       "road_ramp"                     
+[35] "bridge_highway_segment"         "latitude"                      
+[37] "longitude"                      "location"                      
+[39] "neighborhood_group"            </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check how many ZIPs matched neighborhoods</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="fu">is.na</span>(complaints_clean<span class="sc">$</span>neighborhood_group))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+FALSE 
+42646 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview key columns</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(complaints_clean <span class="sc">%&gt;%</span> <span class="fu">select</span>(incident_zip, neighborhood_group, created_date))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["incident_zip"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["neighborhood_group"],"name":[2],"type":["chr"],"align":["left"]},{"label":["created_date"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"10002","2":"Lower East Side and Chinatown","3":"2025 Nov 02 11:31:16 PM","_rn_":"1"},{"1":"11372","2":"Jackson Heights","3":"2025 Nov 02 03:42:11 PM","_rn_":"2"},{"1":"10024","2":"Upper West Side","3":"2025 Nov 02 02:13:18 PM","_rn_":"3"},{"1":"10011","2":"Clinton and Chelsea","3":"2025 Nov 02 11:14:13 AM","_rn_":"4"},{"1":"10019","2":"Clinton and Chelsea","3":"2025 Nov 02 10:01:16 AM","_rn_":"5"},{"1":"11432","2":"Jamaica and Hollis","3":"2025 Nov 01 06:51:12 PM","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<p><strong>Aggregating Complaints</strong> For the 311 data, only complaints explicitly labeled as “Food Poisoning” were kept. Complaint ZIP codes were cleaned and matched to neighborhood groupings using the same mapping applied to the inspection data. Complaints were then counted per neighborhood to create a total number of food poisoning reports. This aggregation strategy prioritizes comparability and interpretability over granularity. Though it sacrifices restaurant-level precision, this does align with the project’s focus on community-level health patterns.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 5: AGGREGATE 311 COMPLAINTS</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>complaints_by_neighborhood <span class="ot">&lt;-</span> complaints_clean <span class="sc">%&gt;%</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(neighborhood_group) <span class="sc">%&gt;%</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_complaints =</span> <span class="fu">n</span>())</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(complaints_by_neighborhood)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["neighborhood_group"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n_complaints"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"Bay Ridge and Dyker Heights","2":"424"},{"1":"Bayside and Little Neck","2":"257"},{"1":"Bedford Stuyvesant","2":"1318"},{"1":"Belmont and East Tremont","2":"240"},{"1":"Bensonhurst","2":"663"},{"1":"Borough Park","2":"744"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="exploratory-analysis-and-analytical-approach" class="level3" data-number="1.0.4">
+<h3 data-number="1.0.4" class="anchored" data-anchor-id="exploratory-analysis-and-analytical-approach"><span class="header-section-number">1.0.4</span> Exploratory Analysis and Analytical Approach</h3>
+<p>Before conducting formal statistical tests, exploratory data analysis (EDA) was used to understand the distributions and scales of both inspection grades and complaint counts. This step revealed two important characteristics of the data:</p>
+<ol type="1">
+<li>Inspection grades are heavily skewed toward A ratings across NYC. As a result, neighborhood average grades cluster tightly between approximately 1.2 and 1.5, as opposed to them spanning the full 1–3 range. This reflects the reality that most NYC restaurants receive A grades, and has important implications for interpreting visualizations and statistical results.</li>
+<li>Food poisoning complaints vary widely across neighborhoods, with some neighborhoods reporting hundreds or thousands of complaints and others reporting relatively few. This skewed distribution motivated the use of log-scaled visualizations to prevent extreme values from dominating the analysis.</li>
+</ol>
+<p>The primary analytical strategy for this question was correlation analysis, supplemented by regression-based visualizations. Pearson’s correlation coefficient was used to assess the linear association between average inspection grade and number of complaints. Understanding that correlation does not imply causation, this still provides a useful first-pass assessment of whether these two measures collaborate with one another together at the neighborhood level.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 6: MERGE DATASETS</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>sq3_df <span class="ot">&lt;-</span> inspection_by_neighborhood <span class="sc">%&gt;%</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(complaints_by_neighborhood, <span class="at">by =</span> <span class="st">"neighborhood_group"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">n_complaints =</span> <span class="fu">replace_na</span>(n_complaints, <span class="dv">0</span>))</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(sq3_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 53
+Columns: 4
+$ neighborhood_group &lt;chr&gt; "Bay Ridge and Dyker Heights", "Bayside and Little …
+$ avg_grade          &lt;dbl&gt; 1.294118, 1.324045, 1.330406, 1.350185, 1.418893, 1…
+$ n_restaurants      &lt;int&gt; 1326, 969, 3871, 811, 2096, 1742, 1833, 619, 12033,…
+$ n_complaints       &lt;int&gt; 424, 257, 1318, 240, 663, 744, 595, 517, 4358, 232,…</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 7: CORRELATION ANALYSIS</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>cor_test_result <span class="ot">&lt;-</span> <span class="fu">cor.test</span>(sq3_df<span class="sc">$</span>avg_grade, sq3_df<span class="sc">$</span>n_complaints)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(cor_test_result)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's product-moment correlation
+
+data:  sq3_df$avg_grade and sq3_df$n_complaints
+t = -0.44042, df = 51, p-value = 0.6615
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ -0.3264168  0.2122718
+sample estimates:
+        cor 
+-0.06155374 </code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="results-and-interpretation" class="level3" data-number="1.0.5">
+<h3 data-number="1.0.5" class="anchored" data-anchor-id="results-and-interpretation"><span class="header-section-number">1.0.5</span> Results and Interpretation</h3>
+<p><strong>Correlation Findings</strong></p>
+<p>The correlation analysis revealed no statistically significant relationship between the neighborhood average inspection grade and the number of 311 food poisoning complaints. The estimated correlation coefficient was small and slightly negative (-0.6615), and the associated p-value (0.6615) was well above typical significance thresholds.</p>
+<p>This suggests that neighborhoods with slightly worse inspection grades do not consistently experience higher numbers of food poisoning complaints. The lack of a strong relationship indicates that inspection outcomes and complaint volumes may be capturing different aspects of food safety risk.</p>
+<p><strong>Visualizations</strong></p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="co"># STEP 8: SCATTERPLOT VISUALIZATION</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sq3_df, <span class="fu">aes</span>(<span class="at">x =</span> avg_grade, <span class="at">y =</span> n_complaints)) <span class="sc">+</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">method =</span> <span class="st">"lm"</span>) <span class="sc">+</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Inspection Grades vs 311 Complaints (Log Scale)"</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Average Inspection Grade"</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Number of Complaints (Log Scale)"</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="STA9750_Group_Project--Kitchen-Nightmares---SQ3-Analysis_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The scatterplot of average inspection grade versus complaint count illustrates the aforementioned finding visually. Points are widely dispersed, and the fitted regression line is nearly flat, reinforcing the absence of a meaningful trend. The use of a log scale on the y-axis ensures that both low- and high-complaint neighborhoods are visible without distortion.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="co">#  STEP 9: BOXPLOT VISUALIZATION</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># ----------------------------</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>sq3_df <span class="ot">&lt;-</span> sq3_df <span class="sc">%&gt;%</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">grade_category =</span> <span class="fu">case_when</span>(</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    avg_grade <span class="sc">&lt;</span> <span class="fl">1.2</span> <span class="sc">~</span> <span class="st">"Mostly A"</span>,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    avg_grade <span class="sc">&lt;</span> <span class="fl">1.35</span> <span class="sc">~</span> <span class="st">"Mixed A/B"</span>,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"More B/C"</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(sq3_df, <span class="fu">aes</span>(<span class="at">x =</span> grade_category, <span class="at">y =</span> n_complaints)) <span class="sc">+</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">fill =</span> <span class="st">"lightblue"</span>) <span class="sc">+</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"311 Complaints by Neighborhood Grade Category"</span>,</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Inspection Grade Category"</span>,</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Number of Food Poisoning Complaints"</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="STA9750_Group_Project--Kitchen-Nightmares---SQ3-Analysis_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>This boxplot analysis grouped neighborhoods into inspection grade categories (predominantly A, mixed A/B, and more B/C). This visualization shows substantial overlap in complaint distributions across categories, further supporting the conclusion that inspection grade differences do not clearly separate neighborhoods by complaint volume.</p>
+<hr>
+</section>
+<section id="discussion-and-implications" class="level3" data-number="1.0.6">
+<h3 data-number="1.0.6" class="anchored" data-anchor-id="discussion-and-implications"><span class="header-section-number">1.0.6</span> Discussion and Implications</h3>
+<p>The absence of a strong relationship between inspection grades and food poisoning complaints does not imply that inspections are unimportant or ineffective, it simply highlights the complexity of measuring food safety outcomes.</p>
+<p>Several limitations help explain these findings:</p>
+<ol type="1">
+<li>311 food poisoning complaints are self-reported and unverified, meaning they may reflect awareness of these resources, trust in reporting systems, or population density rather than true incidence rates.</li>
+<li>Inspection grades are assigned periodically and may not capture short-term lapses in food safety practices.</li>
+<li>Neighborhood-level aggregation introduces the possibility of ecological inconsistencies, where individual-level relationships are obscured at higher levels of aggregation.</li>
+<li>Complaint volume is likely influenced by factors such as neighborhood population size, access to healthcare, and cultural norms around reporting, and these factors are not fully controlled for in this analysis.</li>
+</ol>
+<hr>
+</section>
+<section id="contribution-to-the-overarching-question" class="level3" data-number="1.0.7">
+<h3 data-number="1.0.7" class="anchored" data-anchor-id="contribution-to-the-overarching-question"><span class="header-section-number">1.0.7</span> Contribution to the Overarching Question</h3>
+<p>Despite these limitations, this analysis makes an important contribution to the overarching question of how restaurant quality relates to community health across NYC neighborhoods. While other project analyses identify relationships between economic stress, critical violations, and inspection outcomes, this analysis demonstrates that regulatory grades do not neatly translate into resident-reported food poisoning experiences.</p>
+<p>This finding adds nuance to the overall project narrative. It suggests that improving inspection outcomes alone may not be sufficient to reduce perceived or reported food safety issues and that community engagement, reporting behavior, and public awareness also play critical roles in shaping food safety outcomes.</p>
+<hr>
+</section>
+<section id="future-directions" class="level3" data-number="1.0.8">
+<h3 data-number="1.0.8" class="anchored" data-anchor-id="future-directions"><span class="header-section-number">1.0.8</span> Future Directions</h3>
+<p>Future work could strengthen this analysis by incorporating temporal alignment between inspections and complaints, adjusting complaint counts for population size or restaurant density, or linking complaints more directly to <em>confirmed</em> outbreaks. Additionally, qualitative research on reporting behavior could help explain why some neighborhoods generate more complaints than others, independent of inspection outcomes.</p>
+<hr>
+</section>
+<section id="conclusion" class="level3" data-number="1.0.9">
+<h3 data-number="1.0.9" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">1.0.9</span> Conclusion</h3>
+<p>In summary, this analysis finds <strong>no</strong> strong evidence that neighborhoods with poorer restaurant inspection grades experience higher numbers of food poisoning complaints. Rather than undermining the value of inspections, this result highlights the multifaceted nature of food safety and community health. By comparing regulatory and resident-reported signals, this analysis underscores the importance of using multiple data sources to understand how food safety risks are experienced and perceived across NYC neighborhoods.</p>
+<hr>
+<p><strong>Note: While not part of my specific question analysis, the following are some visualizations I created based on the 311 food poisoning data that I shared during our group project presentation. They simply showcase the number of complaints by borough and by zip code.</strong></p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load dataset</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"311_Food_Poisoning_Data.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>()</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter to food poisoning complaints only</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>df_fp <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(complaint_type <span class="sc">==</span> <span class="st">"Food Poisoning"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">incident_zip =</span> <span class="fu">as.numeric</span>(incident_zip)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(incident_zip) <span class="sc">%&gt;%</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">incident_zip =</span> <span class="fu">as.integer</span>(incident_zip))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There was 1 warning in `mutate()`.
+ℹ In argument: `incident_zip = as.numeric(incident_zip)`.
+Caused by warning:
+! NAs introduced by coercion</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify top 10 ZIP codes</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>top_zip <span class="ot">&lt;-</span> df_fp <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(incident_zip, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(n)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot top ZIPs</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(top_zip, <span class="fu">aes</span>(<span class="at">x =</span> n, <span class="at">y =</span> <span class="fu">factor</span>(incident_zip))) <span class="sc">+</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Top 10 ZIP Codes by Food Poisoning Complaints"</span>,</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Number of Complaints"</span>,</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"ZIP Code"</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="STA9750_Group_Project--Kitchen-Nightmares---SQ3-Analysis_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Load dataset</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"311_Food_Poisoning_Data.csv"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>()</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter to food poisoning complaints only</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>df_fp <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(complaint_type <span class="sc">==</span> <span class="st">"Food Poisoning"</span>)</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Count complaints by borough</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>borough_counts <span class="ot">&lt;-</span> df_fp <span class="sc">%&gt;%</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(borough, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Preview counts</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>borough_counts</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div data-pagedtable="false">
+  <script data-pagedtable-source="" type="application/json">
+{"columns":[{"label":["borough"],"name":[1],"type":["chr"],"align":["left"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"MANHATTAN","2":"17623"},{"1":"BROOKLYN","2":"11125"},{"1":"QUEENS","2":"9790"},{"1":"BRONX","2":"4817"},{"1":"STATEN ISLAND","2":"1630"},{"1":"Unspecified","2":"172"},{"1":"","2":"10"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(borough_counts, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(borough, <span class="sc">-</span>n), <span class="at">y =</span> n)) <span class="sc">+</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"steelblue"</span>) <span class="sc">+</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"311 Food Poisoning Complaints by Borough"</span>,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Borough"</span>,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Number of Complaints"</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>, <span class="at">size =</span> <span class="dv">14</span>),</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="STA9750_Group_Project--Kitchen-Nightmares---SQ3-Analysis_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 </section>
